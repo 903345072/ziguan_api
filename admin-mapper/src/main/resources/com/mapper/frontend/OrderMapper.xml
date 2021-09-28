@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.frontend.OrderMapper" >
+    <resultMap id="findOrderByHeYueId" type="com.stock.models.frontend.nettyOrder" >
+        <id column="id" property="id"></id>
+        <result column="member_heyue_id" property="member_heyue_id"></result>
+        <result column="stock_status" property="stock_status"></result>
+        <result column="buy_price" property="buy_price"></result>
+        <result column="trade_price" property="trade_price"></result>
+        <result column="sell_price" property="sell_price"></result>
+        <result column="freeze_hand" property="freeze_hand"></result>
+        <result column="profit" property="profit"></result>
+        <result column="buy_hand" property="buy_hand"></result>
+        <result column="contract_no" property="contract_no"></result>
+        <result column="pid" property="pid"></result>
+        <result column="cancel_status" property="cancel_status"></result>
+        <result column="stock_code" property="stock_code"></result>
+        <result column="sell_hand" property="sell_hand"></result>
+        <result column="broker_id" property="broker_id"></result>
+        <result column="ping_way" property="ping_way"></result>
+        <result column="weituo_hand" property="weituo_hand"></result>
+    </resultMap>
+
+    <update id="updateMemberOrder">
+        update stock_order set buy_hand = #{buy_hand} where id = #{id}
+    </update>
+    <select id="findStockHand" resultType="java.lang.Integer">
+        select COALESCE(sum(`buy_hand`),0) from stock_order where member_id = #{uid} and stock_code = #{stock_code} and stock_status = 2
+    </select>
+    <select id="findOrderByCaseByPage" parameterType="java.util.Map" resultMap="findOrderByHeYueId" >
+        select * from stock_order where member_heyue_id = #{heyue_id}
+         <if test="stock_status == 2">
+             and stock_status in (2,5) and pid =0
+         </if>
+        <if test="stock_status != 2">
+            and stock_status = #{stock_status}
+        </if>
+         and cancel_status = #{cancel_status}
+    </select>
+
+    <select id="findAllOrderByCase" parameterType="java.util.Map" resultMap="findOrderByHeYueId" >
+        select * from stock_order where member_heyue_id = #{heyue_id} and stock_status = #{stock_status} and cancel_status = #{cancel_status}
+        <if test="stock_status ==2">
+            and pid =0
+        </if>
+    </select>
+
+    <select id="findOrderByState" parameterType="java.util.Map" resultMap="findOrderByHeYueId" >
+        select * from stock_order where stock_status = #{stock_status} and cancel_status = #{cacel_status} order by trade_date desc
+    </select>
+
+    <select id="findOrderByStateByBrokerId" parameterType="java.util.Map" resultMap="findOrderByHeYueId" >
+        select * from stock_order where stock_status = #{stock_status}
+        <if test="cacel_status != null and cacel_status != ''">
+        and cancel_status = #{cacel_status}
+        </if>
+
+        <if test="ping_way != null and ping_way != ''">
+            and ping_way = #{ping_way}
+        </if>
+
+        <if test="time != null and time != ''">
+            and make_order_date &lt; #{time}
+        </if>
+     and broker_id = #{broker_id} order by trade_date desc
+    </select>
+
+    <select id="findCanWeiTuo"  resultMap="findOrderByHeYueId" >
+        select * from stock_order where stock_status in (1,5)  and broker_id = #{broker_id}  order by trade_date desc
+    </select>
+
+    <select id="findOrderByPid"  resultMap="findOrderByHeYueId" >
+        select * from stock_order where pid = #{id} and stock_status = 2 and cancel_status = 0 order by trade_date desc
+    </select>
+
+    <resultMap id="findLastChenJiao" type="com.stock.models.Chengjiao">
+        <id property="id" column="id"></id>
+        <result property="contract_no" column="contract_no"></result>
+        <result property="hand" column="hand"></result>
+        <result property="cj_no" column="cj_no"></result>
+        <result property="status" column="status"></result>
+        <result property="cj_price" column="cj_price"></result>
+        <result property="cj_money" column="cj_money"></result>
+        <result property="add_time" column="add_time"></result>
+    </resultMap>
+
+    <select id="findLastChenJiao" resultMap="findLastChenJiao" >
+        select * from chengjiao where contract_no = #{contract_no} order by id desc limit 1
+    </select>
+
+    <select id="findTodayChengjiao" resultType="java.util.List" resultMap="findLastChenJiao">
+        select * from chengjiao where TO_DAYS(add_time) = TO_DAYS(now())
+    </select>
+    <insert id="addChenJiao">
+        insert into chengjiao (contract_no,hand) values (#{contract_no},#{hand})
+    </insert>
+    <insert id="addChenJiaoList" parameterType="java.util.List">
+        insert into chengjiao (contract_no,hand,cj_no,cj_price,cj_money,status,add_time) values
+        <foreach collection ="ee" item="item" index= "index" separator =",">
+            (#{item.contract_no},#{item.hand},#{item.cj_no},#{item.cj_price},#{item.cj_money},0,now())
+        </foreach>
+    </insert>
+    <update id="updateChengJiaoStatus" parameterType="java.util.List">
+        <foreach collection="noChenJiao" item="item" index="index" open="" close="" separator=";">
+            update chengjiao
+            <set>
+                status= 1,add_time = now()
+            </set>
+            where id = #{item.id}
+        </foreach>
+    </update>
+    <select id="NoChengjiaoByContractNo" resultType="java.util.List" resultMap="findLastChenJiao">
+        select * from chengjiao where contract_no = #{contract_no}
+    </select>
+<select id="findActiveOrder" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select count(*) from stock_order where stock_status in (1,2) and  IF(stock_status =2,pid=0,pid>=0 )  and member_heyue_id = #{member_heyue_id}
+</select>
+    <select id="findActiveOrderMoney" parameterType="java.lang.Integer" resultMap="findOrderByHeYueId">
+    select * from stock_order where stock_status in (1,2,5) and  IF(stock_status =2,pid=0,pid>=0 )  and member_heyue_id = #{member_heyue_id} and trade_direction = 1
+    </select>
+    <select id="findHoldOrder" resultType="java.util.List" resultMap="findOrderByHeYueId">
+        select * from stock_order where stock_status in (1,2) and member_heyue_id = #{id}
+    </select>
+
+    <update id="updateOrderState">
+        update stock_order set stock_status = #{state} where id = #{id}
+    </update>
+    <update id="updateBuyOrderState" parameterType="java.util.Map">
+        update stock_order set stock_status = #{stock_status} , buy_hand =  #{buy_hand} ,buy_price = #{buy_price},cancel_status = 0
+        <if test="up_time == 1">
+            ,trade_date = now()
+        </if>
+        <if test="part_suc != null and part_suc != ''">
+            ,part_suc = #{part_suc}
+        </if>
+        <if test="up_time == 1">
+            ,trade_hand = #{buy_hand}
+        </if>
+        <if test="sx_fee != null and sx_fee != '' ">
+            ,sx_fee = sx_fee + #{sx_fee}
+        </if>
+        <if test="yh_fee != null and yh_fee != '' ">
+            ,yh_fee = yh_fee+ #{yh_fee}
+        </if>
+        where id = #{id}
+    </update>
+
+<update id="updateOrderToPart">
+    update stock_order set stock_status  = 5,cancel_status=0  where id =#{id};
+</update>
+    <update id="closeOrder">
+        update stock_order set stock_status  = 4  where id =#{id};
+    </update>
+
+    <update id="apply_cancel" parameterType="java.lang.Integer">
+        update stock_order set cancel_status = 1 where id = #{id}
+    </update>
+
+    <update id="cancelOrder" parameterType="java.util.Map">
+        update stock_order set stock_status = 3,cancel_status = 2 where id = #{id}
+    </update>
+
+    <select id="findOrderById" parameterType="java.lang.Integer" resultMap="findOrderByHeYueId">
+        select * from stock_order where id = #{id} for update
+    </select>
+
+    <insert id="makerOrder" parameterType="com.stock.models.frontend.Order" useGeneratedKeys="true" keyProperty="id">
+        insert into stock_order (member_heyue_id,stock_code,stock_name,member_id,buy_price,trade_direction,buy_hand,make_order_date,entrust_way,contract_no,pid,freeze_money,broker_id,trade_hand,ping_way,weituo_hand) values
+        (#{member_heyue_id},#{stock_code},#{stock_name},#{member_id},#{buy_price},#{trade_direction},#{buy_hand},now(),#{entrust_way},#{contract_no},#{pid},#{freeze_money},#{broker_id},#{buy_hand},#{ping_way},#{buy_hand})
+    </insert>
+    <update id="updateOrderSystem" parameterType="java.lang.Integer">
+        update stock_order set ping_way = 1 where id = #{id}
+    </update>
+
+    <select id="findTodayHoldCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select COALESCE(sum(`buy_hand`),0) from stock_order where member_heyue_id = #{member_heyue_id} and stock_code = #{stock_code} and member_id = #{member_id} and stock_status in (2,5) and TO_DAYS(trade_date) = TO_DAYS(now()) and trade_direction = 1
+    </select>
+
+
+    <select id="findParentOrder" parameterType="java.util.Map" resultMap="findOrderByHeYueId">
+        select * from stock_order where  member_heyue_id = #{heyue_id} and stock_code = #{stock_code} and pid = 0 and member_id = #{member_id} and stock_status in (2,5) and cancel_status = 0
+    </select>
+
+    <update id="freezeHand">
+        update stock_order set freeze_hand = freeze_hand + #{buy_hand} where id = #{pid}
+    </update>
+
+    <update id="unfreeze_hand">
+        update stock_order set freeze_hand = freeze_hand - #{hand} where id = #{id}
+    </update>
+
+    <update id="decreaseWeiTuoHand">
+        update stock_order set weituo_hand = weituo_hand - #{hand} where id = #{id}
+    </update>
+
+    <update id="decreaseHand">
+        update stock_order set buy_hand = buy_hand - #{buy_hand} where id = #{id}
+    </update>
+
+
+    <update id="updateOrderProfit">
+        update stock_order set profit = profit + #{profit},sell_price=#{sell_price} where id = #{id}
+    </update>
+    <select id="findPartLog" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from part_log where order_id = #{order_id} and hand = #{hand}
+    </select>
+    <insert id="addPartLog" parameterType="java.util.Map">
+        insert into part_log (order_id,hand) values (#{order_id},#{hand})
+    </insert>
+    <select id="findPartOrder" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(*) from stock_order where member_id = #{member_id} and stock_code = #{stock_code} and part_suc = 1 limit 1
+    </select>
+    <resultMap id="getOrderListByPage" type="com.stock.models.frontend.Order">
+        <id property="id" column="id"></id>
+        <result property="stock_code" column="stock_code"></result>
+        <result property="member_heyue_id" column="member_heyue_id"></result>
+        <result property="profit" column="profit"></result>
+        <result property="stock_name" column="stock_name"></result>
+        <result property="buy_price" column="buy_price"></result>
+        <result property="sell_price" column="sell_price"></result>
+        <result property="trade_direction" column="trade_direction"></result>
+        <result property="buy_hand" column="buy_hand"></result>
+        <result property="make_order_date" column="make_order_date"></result>
+        <result property="entrust_way" column="entrust_way"></result>
+        <result property="stock_status" column="stock_status"></result>
+        <result property="ping_way" column="ping_way"></result>
+        <result property="cancel_status" column="cancel_status"></result>
+        <result property="member_id" column="member_id"></result>
+        <result property="contract_no" column="contract_no"></result>
+        <result property="yh_fee" column="yh_fee"></result>
+        <result property="sx_fee" column="sx_fee"></result>
+        <result property="broker_id" column="broker_id"></result>
+        <result property="trade_hand" column="trade_hand"></result>
+        <result column="weituo_hand" property="weituo_hand"></result>
+        <association property="member" javaType="com.stock.models.frontend.Member">
+            <id column="mid" property="id"></id>
+            <result column="nickname" property="nickname"></result>
+            <association property="p_admin" javaType="java.util.Map">
+                <id column="ad_id" property="id"></id>
+                <id column="ad_username" property="username"></id>
+            </association>
+        </association>
+    </resultMap>
+    <resultMap type="java.lang.Integer" id="data_count">
+        <result column="total"/>
+    </resultMap>
+    <select id="getOrderListByPage" resultMap="getOrderListByPage,data_count" resultType="java.util.List">
+        select SQL_CALC_FOUND_ROWS o.*,m.id as mid,o.member_id,m.nickname,ad.username as ad_username,ad.id as ad_id from stock_order o left join member m on o.member_id = m.id left join admin_user ad on ad.id = m.invite_id where 1=1
+        <include refid="common_if"></include>
+    </select>
+
+    <select id="findAllFee" resultType="java.util.Map">
+       select COALESCE(sum(`yh_fee`),0) as yh_fee, COALESCE(sum(`sx_fee`),0) as sx_fee from stock_order o left join member m on o.member_id = m.id left join admin_user ad on ad.id = m.invite_id  where 1=1
+        <include refid="common_if"></include>
+    </select>
+    <sql id="common_if">
+        <choose>
+        <when test="order_pid >0">
+            and o.pid >=0
+        </when>
+        <otherwise>
+           and o.pid = 0
+        </otherwise>
+        </choose>
+        <if test="state != null and state != '' and state != 5">
+            and o.stock_status = #{state}
+        </if>
+        <if test="state != null and state != '' and state == 5">
+            and o.stock_status in (2,4)
+        </if>
+        <if test="nickname != null and nickname != ''">
+            and m.nickname = #{nickname}
+        </if>
+
+        <if test="admin_username != null and admin_username != ''">
+            and ad.username = #{admin_username}
+        </if>
+        <if test="start_time == null and end_time != null">
+            and o.make_order_date &lt; #{end_time}
+        </if>
+        <if test="start_time != null and end_time == null">
+            and o.make_order_date &gt; #{start_time}
+        </if>
+
+        <if test="start_time != null and end_time != null">
+            and o.make_order_date between #{start_time} and #{end_time}
+        </if>
+        <if test="pid != null and pid != null">
+            and m.invite_id  = #{pid}
+        </if>
+    </sql>
+    <update id="updateOrderPid">
+        update stock_order set pid = #{pid} where id = #{id}
+    </update>
+    <update id="addSellHand">
+        update stock_order set sell_hand = sell_hand + #{hand} where id = #{id}
+    </update>
+    <select id="findOrderByCode" parameterType="java.util.Map" resultType="com.stock.models.frontend.nettyOrder" resultMap="findOrderByHeYueId">
+        select * from stock_order where stock_code = #{stock_code} and member_id = #{member_id} and stock_status = 2 and pid = 0 limit 1;
+    </select>
+    <update id="setOrderBroker">
+        update stock_order set broker_id = #{broker_id} where id = #{id}
+    </update>
+</mapper>

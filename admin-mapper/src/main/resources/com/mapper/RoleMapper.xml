@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.RoleMapper" >
+
+    <insert id="insertOneRole" parameterType="com.stock.models.Role" useGeneratedKeys="true" keyProperty="id">
+        insert into role (role_name)values(#{role_name})
+    </insert>
+
+    <update id="updateRole" parameterType="com.stock.models.Role" >
+        update  role set role_name=#{role_name} where id = #{id}
+    </update>
+
+    <insert id="insertRolePer" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        insert into role_per (role_id,per_id)values
+        <foreach collection ="permission_node" item="item" index= "index" separator =",">
+            (#{id},#{item})
+        </foreach>
+</insert>
+
+    <resultMap id="findRole" type="com.stock.models.Role">
+        <id column="id" property="id"></id>
+        <result column="role_name" property="role_name"></result>
+        <collection property="permission" resultMap="permissionMap"/>
+    </resultMap>
+
+    <resultMap id="permissionMap" type="com.stock.models.Permission">
+        <id column="pid" property="id"></id>
+        <result column="title" property="title"></result>
+    </resultMap>
+
+    <select id="findRole" resultMap="findRole">
+select p.id pid,p.title, r.id,r.role_name,p.id pid,p.title from permission p left join role_per rp on rp.per_id = p.id left join role r on r.id = rp.role_id where rp.role_id in (
+select t.id from(select id from role where 1= 1
+
+        <if test="role_name != null and role_name != '' ">
+            and role_name = #{role_name}
+        </if>
+        <choose>
+            <when test="sort == '+id'">
+                order by id asc
+            </when>
+            <otherwise >
+                order by id desc
+            </otherwise>
+        </choose>
+        limit #{lim_n},${limit}
+        ) as t
+)
+
+
+    </select>
+
+    <select id="findCount" resultType="java.lang.Integer">
+        select count(*) from role
+    </select>
+
+    <delete id="deleteRolePer">
+        delete from role_per where role_id = #{role_id}
+    </delete>
+
+    <delete id="deleteRole">
+        delete from role where id = #{id}
+    </delete>
+
+
+    <resultMap id="findAllRoleMap" type="com.stock.models.Role" >
+        <id property="id" column="id"></id>
+        <result column="role_name" property="role_name"></result>
+    </resultMap>
+    <select id="findAllRole" resultMap="findAllRoleMap">
+        select * from role
+    </select>
+
+</mapper>

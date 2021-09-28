@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.HeYueMapper" >
+
+    <resultMap id="findHeYueByPage" type="com.stock.models.HeYue">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="is_deleted" property="is_deleted"></result>
+        <result column="base_num" property="base_num"></result>
+    </resultMap>
+
+    <select id="findHeYueByPage" resultMap="findHeYueByPage">
+        SELECT * from heyue where 1=1
+        <include refid="common_if"/>
+    </select>
+
+    <select id="findHeYueCount" resultType="java.lang.Integer" >
+        SELECT count(*) from heyue where 1=1
+        <include refid="common_if"/>
+    </select>
+
+    <insert id="insertOneHeYue" parameterType="com.stock.models.HeYue" useGeneratedKeys="true" keyProperty="id">
+        insert into heyue (name,is_deleted,base_num) values (#{name},#{is_deleted},#{base_num})
+    </insert>
+
+    <update id="updateOneHeYue" parameterType="com.stock.models.HeYue">
+        update heyue set name = #{name},is_deleted = #{is_deleted},base_num=#{base_num} where id = #{id}
+    </update>
+
+    <update id="updateHeYueStaus">
+        update heyue set is_deleted = #{is_deleted} where id = #{id}
+    </update>
+
+    <sql id="common_if">
+        <if test="name != null and name != '' ">
+            and name = #{name}
+        </if>
+        <if test="is_deleted != null and is_deleted != '' ">
+            and is_deleted = #{is_deleted}
+        </if>
+    </sql>
+    <select id="findValidHeYueIdList" resultMap="findValidHeYueIdList">
+        select id,name from heyue where is_deleted = 0
+    </select>
+    <resultMap id="findValidHeYueIdList" type="java.util.Map">
+        <id column="id" property="id"></id>
+        <id column="name" property="name"></id>
+    </resultMap>
+    <select id="findHeYueNameById" resultMap="findHeYueNameById" parameterType="java.lang.Integer">
+           select name,base_num from heyue where id = #{id} and is_deleted = 0
+    </select>
+    <resultMap id="findHeYueNameById" type="java.util.Map">
+        <result column="name" property="name"></result>
+        <result column="base_num" property="base_num"></result>
+
+    </resultMap>
+</mapper>

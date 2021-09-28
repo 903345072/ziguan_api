@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.InterestMapper" >
+
+    <resultMap id="findInterestList" type="com.stock.models.Interest">
+         <id column="id" property="id"></id>
+         <result column="rate" property="rate"></result>
+        <association property="heYue" javaType="com.stock.models.HeYue">
+            <id column="hid" property="id"></id>
+            <result column="hname" property="name"></result>
+        </association>
+        <association property="leverage" javaType="com.stock.models.Leverage">
+            <id column="lid" property="id"></id>
+            <result column="lname" property="name"></result>
+        </association>
+    </resultMap>
+
+   <select id="findInterest" resultMap="findInterestList">
+       select i.*,h.id hid,h.name hname,l.id lid,l.name lname from interest i left join heyue h on i.heYueId=h.id left join leverage l on i.leverageId=l.id where h.is_deleted = 0 and l.is_deleted = 0
+   </select>
+
+
+    <select id="findInterestByCase" resultMap="findInterestList">
+               select i.*,h.id hid,h.name hname,l.id lid,l.name lname from interest i left join heyue h on i.heYueId=h.id left join leverage l on i.leverageId=l.id where h.is_deleted = 0 and l.is_deleted = 0 and h.id = #{hid} and l.id=#{lid}
+    </select>
+
+    <insert id="setInterest" parameterType="java.util.List" >
+        insert into interest (heYueId,leverageId,rate) values
+        <foreach collection ="interestList" item="item" index= "index" separator =",">
+            (#{item.hid},#{item.lid},#{item.rate})
+        </foreach>
+    </insert>
+    <delete id="deleteAllInterest">
+        delete from interest
+    </delete>
+    <resultMap id="findInterestByIds_" type="java.util.HashMap">
+        <result column="rate" property="rate"></result>
+    </resultMap>
+    <select id="findInterestByIds" resultMap="findInterestByIds_">
+        select rate from interest where heYueId = #{heyue_id} and leverageId = #{leverage_id}
+    </select>
+</mapper>

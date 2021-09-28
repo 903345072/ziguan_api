@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.UserMapper" >
+
+    <resultMap id="findUserInfo" type="com.stock.models.User">
+        <id column="uid" property="id"></id>
+        <result column="username" property="username"></result>
+        <result column="password" property="password"></result>
+        <result column="invite_code" property="invite_code"></result>
+        <collection property="role"  javaType="java.util.ArrayList" ofType="com.stock.models.Role">
+            <result column="role_name" property="role_name"></result>
+            <collection property="permission" javaType="java.util.ArrayList" ofType="com.stock.models.Permission">
+                <id column="pid" property="id"></id>
+                <result column="pid" property="id" ></result>
+                <result column="parent_id" property="parent_id" ></result>
+                <result column="url" property="url"></result>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findUserInfo" resultMap="findUserInfo" parameterType="java.lang.Integer">
+        SELECT u.id uid,u.username,u.invite_code,r.role_name,p.id pid,p.parent_id,p.url from admin_user u LEFT JOIN user_role ur on u.id = ur.user_id LEFT JOIN role r on ur.role_id = r.id LEFT JOIN role_per rp on rp.role_id = r.id LEFT JOIN permission p on p.id = rp.per_id where u.id =#{id}
+    </select>
+
+    <resultMap id="findUserInfo_" type="com.stock.models.User">
+        <id column="uid" property="id"></id>
+        <result column="username" property="username"></result>
+        <result column="password" property="password"></result>
+        <result column="status" property="status"></result>
+        <collection property="role"  javaType="java.util.ArrayList" ofType="com.stock.models.Role" >
+            <result column="role_name" property="role_name"></result>
+            <collection property="permission" javaType="java.util.ArrayList" ofType="com.stock.models.Permission" >
+                <id column="id" property="id"/>
+                <result column="url" property="url"></result>
+            </collection>
+        </collection>
+    </resultMap>
+
+
+    <select id="findUserInfoByName" resultMap="findUserInfo_" parameterType="String">
+        SELECT u.id uid,u.status,u.password,u.username,r.role_name ,p.* from admin_user u LEFT JOIN user_role ur on u.id = ur.user_id LEFT JOIN role r on ur.role_id = r.id LEFT JOIN role_per rp on rp.role_id = r.id LEFT JOIN permission p on p.id = rp.per_id where u.username =#{username}
+    </select>
+
+    <resultMap id="getAllUserMap" type="com.stock.models.User">
+        <id column="id" property="id"></id>
+        <result column="username" property="username"></result>
+        <result column="status" property="status"></result>
+        <result column="created_at" property="created_at"></result>
+        <result column="invite_code" property="invite_code"></result>
+        <collection property="role" javaType="java.util.ArrayList" ofType="com.stock.models.Role" >
+            <id column="rid" property="id"></id>
+            <result column="role_name" property="role_name"></result>
+        </collection>
+    </resultMap>
+    <select id="getAllUserByPage" resultMap="getAllUserMap">
+         select u.id id,u.status,u.created_at,u.username,u.invite_code,r.id rid,r.role_name,ur.* from admin_user u left join user_role ur on u.id = ur.user_id left join role r on ur.role_id = r.id where 1=1
+
+             <if test="username != null and username != '' ">
+                 and u.username = #{username}
+             </if>
+             <if test="status != null and status != '' ">
+                 and u.status = #{status}
+             </if>
+
+
+    </select>
+
+    <delete id="deleteUserRole" >
+        delete from user_role where user_id = #{id}
+    </delete>
+
+    <insert id="insertUserRole" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        insert into user_role (user_id,role_id)values
+        <foreach collection ="role_node" item="item" index= "index" separator =",">
+            (#{id},#{item})
+        </foreach>
+    </insert>
+    <update id="updateUser">
+        update admin_user set username = #{username}<if test="password != null and password != ''">,password=#{password}</if>,status=#{status} where id = #{id}
+    </update>
+    <select id="getCount" resultType="java.lang.Integer">
+        select count(*) from admin_user where 1=1
+        <if test="username != null and username != '' ">
+            and username = #{username}
+        </if>
+        <if test="status != null and status != '' ">
+            and status = #{status}
+        </if>
+    </select>
+
+    <update id="updateStatus">
+        update admin_user set status = #{status} where id = #{id}
+    </update>
+    <insert id="addUser" parameterType="com.stock.models.User" useGeneratedKeys="true" keyProperty="id">
+        insert into admin_user (username,password,created_at,invite_code)values (#{username},#{password},now(),#{invite_code})
+    </insert>
+    <select id="findMemberByInviteCode" resultType="java.lang.Integer">
+         select id from admin_user where invite_code = #{invite_code}
+    </select>
+</mapper>

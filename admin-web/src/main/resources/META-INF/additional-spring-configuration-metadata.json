@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "widraw_fee",
+      "type": "java.lang.String",
+      "description": "Description for widraw_fee."
+  }
+] }

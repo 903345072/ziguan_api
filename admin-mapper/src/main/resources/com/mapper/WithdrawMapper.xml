@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.WithdrawMapper" >
+
+    <resultMap id="findWithdrawList" type="com.stock.models.Withdraw">
+         <id column="id" property="id"></id>
+         <result column="withdraw_money" property="withdraw_money"></result>
+         <result column="actual_money" property="actual_money"></result>
+         <result column="fee" property="fee"></result>
+         <result column="add_time" property="add_time"></result>
+         <result column="state" property="state"></result>
+
+        <association property="member" javaType="java.util.Map">
+            <id column="id" property="id"></id>
+            <result column="username" property="username"></result>
+        </association>
+
+        <association property="bank" javaType="java.util.Map">
+            <id column="id" property="id"></id>
+            <result column="bank_user" property="bank_user"></result>
+            <result column="bank_card" property="bank_card"></result>
+            <result column="bank_name" property="bank_name"></result>
+        </association>
+    </resultMap>
+
+    <resultMap type="java.lang.Integer" id="count">
+        <result column="total"/>
+    </resultMap>
+   <select id="findWithdrawListByPage" resultMap="findWithdrawList,count">
+       select SQL_CALC_FOUND_ROWS w.*,m.username,m.id,ub.* from member_withdraw w left join member m on m.id=w.uid left join user_bank ub on ub.uid = w.uid where 1= 1
+       <if test="username != null and username != '' ">
+           and m.username = #{username}
+       </if>
+       <if test="state != null and state != '' ">
+           and w.state = #{state}
+       </if>
+   </select>
+
+    <update id="updateWithdrawState">
+        update member_withdraw set state = #{state} where id = #{id}
+    </update>
+
+<select id="findOneWithdraw" resultType="com.stock.models.Withdraw">
+    select * from member_withdraw where id = #{id}
+</select>
+</mapper>

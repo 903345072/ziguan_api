@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.frontend.MemberHeYueApplyMapper" >
+
+   <insert id="addOneHeYueApply" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="id">
+       <selectKey keyProperty="id" resultType="int" order="AFTER">
+           SELECT last_insert_id();
+       </selectKey>
+       insert into member_heyue_apply (bei,member_id,total_capital,deposit,leverage_money,loss_warning_line,loss_sell_line,interest_rate,interest,capital_used_time,repare_capital,apply_state,apply_time,heyue_id,leverage_id)values
+       (#{bei},#{member_id},#{total_capital},#{deposit},#{leverage_money},#{loss_warning_line},#{loss_sell_line},#{interest_rate},#{interest},#{capital_used_time},#{repare_capital},#{apply_state},now(),#{heyue_id},#{leverage_id})
+   </insert>
+
+    <update id="updateMemberHeYue">
+        update member_heyue_apply set total_capital = #{total_capital},deposit=#{deposit},leverage_money=#{leverage_money}
+        ,loss_warning_line=#{loss_warning_line},loss_sell_line=#{loss_sell_line} where id = #{id}
+    </update>
+    <insert id="addHeYue" >
+    insert into member_heyue_apply (bei,member_id,total_capital,deposit,leverage_money,loss_warning_line,loss_sell_line,interest_rate,interest,capital_used_time,repare_capital,apply_state,apply_time,heyue_id,leverage_id)values
+       (1,#{id},#{total_capital},#{deposit},#{leverage_money},#{loss_warning_line},#{loss_sell_line},0.3,3,1,1,1,now(),1,1)
+    </insert>
+    <resultMap id="findMemberHeYueApplyListByPage" type="com.stock.models.MemberHeYueApply">
+        <id property="id" column="id"></id>
+        <result property="member_id" column="member_id"></result>
+        <result property="total_capital" column="total_capital"></result>
+        <result property="deposit" column="deposit"></result>
+        <result property="leverage_money" column="leverage_money"></result>
+        <result property="loss_warning_line" column="loss_warning_line"></result>
+        <result property="loss_sell_line" column="loss_sell_line"></result>
+        <result property="interest_rate" column="interest_rate"></result>
+        <result property="interest" column="interest"></result>
+        <result property="capital_used_time" column="capital_used_time"></result>
+        <result property="repare_capital" column="repare_capital"></result>
+        <result property="apply_state" column="apply_state"></result>
+        <result property="apply_time" column="apply_time"></result>
+        <result property="heyue_id" column="heyue_id"></result>
+        <result property="leverage_id" column="leverage_id"></result>
+        <result property="bei" column="bei"></result>
+        <result property="profit" column="profit"></result>
+        <result property="profit_rate" column="profit_rate"></result>
+        <result property="profit_" column="profit_"></result>
+        <result property="member_interest" column="member_interest"></result>
+        <result property="close_date" column="close_date"></result>
+        <association property="member" javaType="com.stock.models.frontend.Member">
+            <id property="id" column="mid"></id>
+            <result column="m_username" property="username"></result>
+            <result column="nickname" property="nickname"></result>
+            <association property="p_admin" javaType="java.util.Map">
+                <id column="ad_id" property="id"></id>
+                <result column="ad_username" property="username"></result>
+            </association>
+        </association>
+        <association property="heyue" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="hname" property="name"></result>
+        </association>
+        <association property="leverage" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="lname" property="name"></result>
+        </association>
+        <collection property="order_list" javaType="java.util.List" column="id" select="getOrderList" ofType="com.stock.models.frontend.nettyOrder" />
+    </resultMap>
+    <resultMap id="dd" type="com.stock.models.frontend.nettyOrder">
+        <id property="id" column="id"></id>
+        <result property="stock_code" column="stock_code"></result>
+        <result property="buy_hand" column="buy_hand"></result>
+    </resultMap>
+    <select id="getOrderList" resultMap="dd" resultType="com.stock.models.frontend.nettyOrder">
+        select * from stock_order where stock_status in (1,2,5) and  IF(stock_status =2,pid=0,pid>=0 ) and member_heyue_id = #{id} and trade_direction = 1
+    </select>
+    <resultMap type="java.lang.Integer" id="data_count_">
+        <result column="total"/>
+    </resultMap>
+    <select id="findMemberHeYueApplyListByPage" resultMap="findMemberHeYueApplyListByPage,data_count_">
+        select SQL_CALC_FOUND_ROWS mha.* ,m.id mid,m.username as m_username,m.nickname,ad.username as ad_username,ad.id as ad_id from member_heyue_apply mha left join member m on mha.member_id = m.id left join admin_user ad on ad.id = m.invite_id where 1 = 1
+        <include refid="common_if"/>
+    </select>
+
+<insert id="addForceLog" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="id">
+    insert into force_order (member_heyue_id,total_cap_money,market_value,loss_line,total_money,add_time) values (#{member_heyue_id},#{total_cap_money},#{market_value},#{loss_line},#{total_money},now())
+</insert>
+
+
+    <select id="findMemberInterestByCase" resultType="java.lang.Double">
+        select COALESCE(sum(`member_interest`),0) from member_heyue_apply mha left join member m on mha.member_id = m.id left join admin_user ad on ad.id = m.invite_id where 1 = 1
+        <include refid="common_if"/>
+    </select>
+    <sql id="common_if">
+        <if test="username != null and username != '' ">
+            and m.nickname = #{username}
+        </if>
+
+        <if test="apply_state != null and apply_state != '' ">
+            and apply_state = #{apply_state}
+        </if>
+
+        <if test="admin_username != null and admin_username != ''">
+            and ad.username = #{admin_username}
+        </if>
+
+        <if test="start_time == null and end_time != null">
+            and apply_time &lt; #{end_time}
+        </if>
+        <if test="start_time != null and end_time == null">
+            and apply_time &gt; #{start_time}
+        </if>
+
+        <if test="start_time != null and end_time != null">
+            and apply_time between #{start_time} and #{end_time}
+        </if>
+
+        <if test="pid != null and pid != null">
+            and m.invite_id = #{pid}
+        </if>
+
+    </sql>
+
+    <update id="updateHeYueApplyState" parameterType="java.util.Map">
+        update member_heyue_apply set apply_state = #{apply_state}  where id = #{id}
+    </update>
+
+    <resultMap id="selectMemberHeYueByCase" type="com.stock.models.MemberHeYueApply">
+        <id column="id" property="id"></id>
+        <result column="deposit" property="deposit"></result>
+        <result column="total_capital" property="total_capital"></result>
+        <result column="apply_time" property="apply_time"></result>
+        <result column="bei" property="bei"></result>
+        <result column="profit" property="profit"></result>
+    </resultMap>
+
+    <resultMap id="selectMemberHeYueByCase_orders" type="com.stock.models.MemberHeYueApply">
+        <id column="id" property="id"></id>
+        <result column="deposit" property="deposit"></result>
+        <result column="total_capital" property="total_capital"></result>
+        <result column="apply_time" property="apply_time"></result>
+        <result column="bei" property="bei"></result>
+        <result column="profit" property="profit"></result>
+        <result column="interest" property="interest"></result>
+        <result column="leverage_money" property="leverage_money"></result>
+        <result column="loss_sell_line" property="loss_sell_line"></result>
+        <result column="loss_warning_line" property="loss_warning_line"></result>
+        <collection property="orders" javaType="java.util.ArrayList" ofType="com.stock.models.frontend.nettyOrder">
+            <id property="id" column="oid"></id>
+            <result property="buy_price" column="buy_price"></result>
+            <result property="buy_hand" column="buy_hand"></result>
+            <result property="stock_code" column="stock_code"></result>
+        </collection>
+    </resultMap>
+
+    <select id="selectMemberHeYueByCase" resultMap="selectMemberHeYueByCase_orders" resultType="java.util.List" parameterType="java.util.Map">
+        select ma.*,o.id as oid,o.buy_price,o.buy_hand,o.stock_code  from member_heyue_apply  ma left join stock_order o on o.member_heyue_id = ma.id  and stock_status in (1,2,5) and IF(stock_status =2,pid=0,pid>=0 )  and trade_direction = 1 where ma.member_id = #{member_id} and apply_state = #{apply_state}
+    </select>
+
+    <select id="selectHistoryHeYue" resultMap="selectMemberHeYueByCase" resultType="java.util.List" parameterType="java.util.Map">
+        select * from member_heyue_apply where member_id = #{member_id} and apply_state in (2,3,4)
+    </select>
+    <resultMap id="selectMemberHeYueByStates" type="com.stock.models.MemberHeYueApply">
+        <id column="id" property="id"></id>
+        <result column="member_id" property="member_id"></result>
+        <result column="deposit" property="deposit"></result>
+        <result column="total_capital" property="total_capital"></result>
+        <result column="apply_time" property="apply_time"></result>
+        <result column="bei" property="bei"></result>
+        <result column="profit" property="profit"></result>
+        <result column="start_time" property="start_time"></result>
+        <result column="end_time" property="end_time"></result>
+        <result column="loss_sell_line" property="loss_sell_line"></result>
+        <association property="member"  javaType="com.stock.models.frontend.Member">
+            <id property="id" column="mid"></id>
+        </association>
+        <collection property="order_list" javaType="java.util.List" column="id" select="getOrderList" ofType="com.stock.models.frontend.nettyOrder" />
+
+    </resultMap>
+
+    <select id="selectMemberHeYueByStates" resultMap="selectMemberHeYueByStates" resultType="java.util.List" >
+        select h.*,m.id as mid from member_heyue_apply h left join member m on h.member_id = m.id where h.apply_state in (1,2)
+    </select>
+
+    <select id="selectHeyueById" parameterType="java.lang.Integer"  resultMap="selectHeyueById">
+        select * from member_heyue_apply ma left join member m on m.id = ma.member_id where ma.id = #{id}
+    </select>
+    <resultMap id="selectHeyueById" type="com.stock.models.MemberHeYueApply">
+        <id property="id" column="id"></id>
+        <result property="member_id" column="member_id"></result>
+        <result property="total_capital" column="total_capital"></result>
+        <result property="deposit" column="deposit"></result>
+        <result property="leverage_money" column="leverage_money"></result>
+        <result property="loss_warning_line" column="loss_warning_line"></result>
+        <result property="loss_sell_line" column="loss_sell_line"></result>
+        <result property="interest_rate" column="interest_rate"></result>
+        <result property="interest" column="interest"></result>
+        <result property="capital_used_time" column="capital_used_time"></result>
+        <result property="repare_capital" column="repare_capital"></result>
+        <result property="apply_state" column="apply_state"></result>
+        <result property="apply_time" column="apply_time"></result>
+        <result property="heyue_id" column="heyue_id"></result>
+        <result property="leverage_id" column="leverage_id"></result>
+        <result property="bei" column="bei"></result>
+        <result property="profit" column="profit"></result>
+        <result property="profit_rate" column="profit_rate"></result>
+        <result property="profit_" column="profit_"></result>
+        <result property="member_interest" column="member_interest"></result>
+        <result property="close_date" column="close_date"></result>
+        <association property="member" javaType="com.stock.models.frontend.Member">
+            <id property="id" column="mid"></id>
+            <result column="m_username" property="username"></result>
+            <result column="nickname" property="nickname"></result>
+            <association property="p_admin" javaType="java.util.Map">
+                <id column="ad_id" property="id"></id>
+                <result column="ad_username" property="username"></result>
+            </association>
+        </association>
+        <association property="heyue" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="hname" property="name"></result>
+        </association>
+        <association property="leverage" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="lname" property="name"></result>
+        </association>
+        <collection property="order_list" javaType="java.util.List" column="id" select="getOrderList" ofType="com.stock.models.frontend.nettyOrder" />
+    </resultMap>
+    <update id="addDeposit" >
+        update member_heyue_apply set deposit =#{deposit} , total_capital =total_capital+ #{add_deposit} where id = #{id}
+    </update>
+
+    <update id="decreaseHeYueMoney">
+        update member_heyue_apply set total_capital = total_capital - #{amount} where id = #{member_heyue_id}
+    </update>
+
+    <update id="increaseHeYueMoney">
+        update member_heyue_apply set total_capital = total_capital + #{amount} where id = #{member_heyue_id}
+    </update>
+
+
+    <update id="decreaseHeYueProfit">
+        update member_heyue_apply set profit = profit - #{profit} where id = #{member_heyue_id}
+    </update>
+
+    <update id="increaseHeYueProfit">
+        update member_heyue_apply set profit = profit + #{profit} where id = #{member_heyue_id}
+    </update>
+
+    <update id="updateHeYueStartTime">
+        update member_heyue_apply set start_time = #{start_time} where id = #{id}
+    </update>
+
+    <update id="updateHeYueEndTime">
+        update member_heyue_apply set end_time = #{end_time} where id = #{id}
+    </update>
+    <update id="expandHeYue">
+        update member_heyue_apply set deposit= deposit+ #{amount},repare_capital=repare_capital+#{repare_capital}, total_capital =total_capital+#{total_capital},loss_warning_line=loss_warning_line+#{loss_warning_line},loss_sell_line=loss_sell_line+#{loss_sell_line},interest=interest+#{interest},leverage_money=leverage_money+#{leverage_money} where id = #{id}
+    </update>
+
+    <select id="findCanEffectHeYue" resultMap="selectMemberHeYueByCase">
+        select * from member_heyue_apply where now() > start_time and apply_state = 0
+    </select>
+
+    <select id="getHeYueProfitRankList" resultMap="getHeYueProfitRankList">
+       select *,m.username as m_username ,l.name as lname,h.name as hname from member_heyue_apply ma left join member m on m.id = ma.member_id left join heyue h on h.id = ma.heyue_id left join leverage l on l.id = ma.leverage_id
+    </select>
+
+
+    <resultMap id="getHeYueProfitRankList" type="com.stock.models.MemberHeYueApply">
+        <id property="id" column="id"></id>
+        <result property="member_id" column="member_id"></result>
+        <result property="total_capital" column="total_capital"></result>
+        <result property="deposit" column="deposit"></result>
+        <result property="leverage_money" column="leverage_money"></result>
+        <result property="loss_warning_line" column="loss_warning_line"></result>
+        <result property="loss_sell_line" column="loss_sell_line"></result>
+        <result property="interest_rate" column="interest_rate"></result>
+        <result property="interest" column="interest"></result>
+        <result property="capital_used_time" column="capital_used_time"></result>
+        <result property="repare_capital" column="repare_capital"></result>
+        <result property="apply_state" column="apply_state"></result>
+        <result property="apply_time" column="apply_time"></result>
+        <result property="heyue_id" column="heyue_id"></result>
+        <result property="leverage_id" column="leverage_id"></result>
+        <result property="bei" column="bei"></result>
+        <result property="profit" column="profit"></result>
+        <result property="profit_rate" column="profit_rate"></result>
+        <result property="profit_" column="profit_"></result>
+        <result property="member_interest" column="member_interest"></result>
+        <result property="close_date" column="close_date"></result>
+        <association property="member" javaType="com.stock.models.frontend.Member">
+            <id property="id" column="mid"></id>
+            <result column="m_username" property="username"></result>
+            <result column="nickname" property="nickname"></result>
+            <association property="p_admin" javaType="java.util.Map">
+                <id column="ad_id" property="id"></id>
+                <result column="ad_username" property="username"></result>
+            </association>
+        </association>
+        <association property="heyue" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="hname" property="name"></result>
+        </association>
+        <association property="leverage" javaType="java.util.Map">
+            <id property="id" column="id"></id>
+            <result column="lname" property="name"></result>
+        </association>
+        <collection property="order_list" javaType="java.util.List" column="id" select="getOrderList" ofType="com.stock.models.frontend.nettyOrder" />
+
+    </resultMap>
+
+    <update id="addMemberInterest">
+        update member_heyue_apply set member_interest = member_interest + #{amount} where id = #{link_id}
+    </update>
+
+    <update id="updateHeYueCloseDate">
+        update member_heyue_apply set close_date = now() where id = #{member_heyue_id}
+    </update>
+</mapper>

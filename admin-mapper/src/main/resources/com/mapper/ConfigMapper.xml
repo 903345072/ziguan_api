@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.ConfigMapper" >
+   <resultMap id="getConfig" type="java.util.Map">
+       <id property="id" column="id"></id>
+       <result property="cn_name" column="cn_name"></result>
+       <result property="value" column="value"></result>
+       <result property="en_name" column="en_name"></result>
+   </resultMap>
+   <select id="getConfig" resultMap="getConfig" resultType="java.util.List">
+       select * from config
+   </select>
+
+</mapper>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.LeverageMapper" >
+
+    <resultMap id="findLeverageByPage" type="com.stock.models.Leverage">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="is_deleted" property="is_deleted"></result>
+    </resultMap>
+
+    <select id="findLeverageByPage" resultMap="findLeverageByPage">
+        SELECT * from leverage where 1=1
+        <include refid="common_if"/>
+    </select>
+
+    <select id="findLeverageCount" resultType="java.lang.Integer" >
+        SELECT count(*) from leverage where 1=1
+        <include refid="common_if"/>
+    </select>
+
+    <insert id="insertOneLeverage" parameterType="com.stock.models.Leverage" useGeneratedKeys="true" keyProperty="id">
+        insert into leverage (name,is_deleted) values (#{name},#{is_deleted})
+    </insert>
+
+    <update id="updateOneLeverage" parameterType="com.stock.models.Leverage">
+        update leverage set name = #{name},is_deleted = #{is_deleted} where id = #{id}
+    </update>
+
+    <update id="updateLeverageStaus">
+        update leverage set is_deleted = #{is_deleted} where id = #{id}
+    </update>
+
+    <sql id="common_if">
+        <if test="name != null and name != '' ">
+            and name = #{name}
+        </if>
+        <if test="is_deleted != null and is_deleted != '' ">
+            and is_deleted = #{is_deleted}
+        </if>
+    </sql>
+    <select id="findValidLeverageIdList" resultMap="findValidLeverageIdList">
+        select id,name from leverage where is_deleted = 0
+    </select>
+    <resultMap id="findValidLeverageIdList" type="java.util.Map">
+        <id column="id" property="id"></id>
+        <id column="name" property="name"></id>
+    </resultMap>
+
+    <select id="findLeverageNameById" resultMap="findLeverageNameById" parameterType="java.lang.Integer">
+           select name from leverage where id = #{id} and is_deleted = 0
+    </select>
+    <resultMap id="findLeverageNameById" type="java.util.Map">
+        <result column="name" property="name"></result>
+    </resultMap>
+</mapper>

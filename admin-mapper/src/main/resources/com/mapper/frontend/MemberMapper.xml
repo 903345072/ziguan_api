@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.frontend.MemberMapper" >
+
+    <insert id="addMemberFengKong">
+        delete from fengkong where uid = #{uid};
+        insert into fengkong (yj_rate,is_kc,kc_max,single_max,forbid_list,uid)values (#{yj_rate},#{is_kc},#{kc_max},#{single_max},#{forbid_list},#{uid})
+    </insert>
+    <resultMap id="findMember_" type="com.stock.models.frontend.Member">
+        <id column="id" property="id"></id>
+        <result column="username" property="username"></result>
+        <result column="nickname" property="nickname"></result>
+        <result column="password" property="password"></result>
+        <result column="status" property="status"></result>
+        <result column="amount" property="amount"></result>
+        <result column="invite_id" property="invite_id"></result>
+        <result column="created_at" property="created_at"></result>
+        <result column="deposit" property="deposit"></result>
+        <association property="p_admin" javaType="java.util.Map">
+            <id column="ad_id" property="id"></id>
+            <result column="ad_username" property="username"></result>
+        </association>
+        <association property="fengkong" javaType="java.util.Map">
+            <id column="fengkong_id" property="id"></id>
+            <id column="uid" property="uid"></id>
+            <result column="yj_rate" property="yj_rate"></result>
+            <result column="is_kc" property="is_kc"></result>
+            <result column="kc_max" property="kc_max"></result>
+            <result column="single_max" property="single_max"></result>
+            <result column="forbid_list" property="forbid_list"></result>
+        </association>
+        <association property="bank" javaType="java.util.Map">
+            <id column="ubid" property="id"></id>
+            <id column="bank_user" property="bank_user"></id>
+        </association>
+    </resultMap>
+    <select id="findMemberFengKong" resultType="java.util.Map">
+        select * from fengkong where uid = #{id}
+    </select>
+    <select id="findMember" resultMap="findMember_" parameterType="String">
+        SELECT id,username,password,status,amount from member where username =#{username}
+    </select>
+
+    <select id="findMemberById" resultMap="findMember_" parameterType="java.lang.Integer">
+        SELECT id,username,password,status,amount from member where id =#{id}
+    </select>
+
+    <update id="updateMemberPassword">
+        update member set password = #{password} where username = #{phone}
+    </update>
+    <select id="findMemberByPhone" resultMap="findMember_">
+         SELECT id,username,password,status,amount from member where username =#{phone}
+    </select>
+    <update id="decreaseMemberAmount" parameterType="java.util.Map">
+          update member set amount = amount - #{amount} where id = #{member_id}
+    </update>
+
+    <update id="increaseMemberAmount" parameterType="java.util.Map">
+          update member set amount = amount + #{amount} where id = #{member_id}
+    </update>
+
+    <update id="updatePassword" parameterType="java.util.Map">
+          update member set password = #{password} where id = #{id}
+    </update>
+    <select id="findpassword" resultType="java.lang.String" parameterType="java.lang.Integer">
+        select password from member where id = #{id}
+    </select>
+
+
+    <select resultType="com.stock.models.frontend.UserBank" id="findUserBank" parameterType="java.lang.Integer">
+        select * from user_bank where uid = #{uid}
+    </select>
+
+    <update id="updateUserBank"  parameterType="com.stock.models.frontend.UserBank">
+        update user_bank set bank_user = #{bank_user},bank_card = #{bank_card},bank_name = #{bank_name},bank_phone = #{bank_phone},
+        bank_branch = #{bank_branch} where uid = #{uid}
+    </update>
+
+    <insert id="addUserBank" parameterType="com.stock.models.frontend.UserBank">
+        insert into user_bank (bank_user,bank_card,bank_name,bank_phone,bank_branch,uid) values
+        (#{bank_user},#{bank_card},#{bank_name},#{bank_phone},#{bank_branch},#{uid})
+    </insert>
+
+    <insert id="applyWithdraw"  parameterType="java.util.Map"  useGeneratedKeys="true" keyProperty="id">
+        <selectKey keyProperty="id" resultType="int" order="AFTER">
+            SELECT last_insert_id();
+        </selectKey>
+        insert into member_withdraw (withdraw_money,actual_money,fee,add_time,uid) values (#{withdraw_money},#{actual_money},#{fee},now(),#{uid});
+    </insert>
+    <insert id="addBill" parameterType="java.util.Map">
+        insert into user_bill (uid,link_id,mark,amount,after_amount,type,add_time,hash) values (
+     #{member_id}, #{link_id}, #{mark},#{amount},#{after_amount},#{type},now(),MD5(concat(#{link_id},#{mark},now()))
+        )
+    </insert>
+    <select id="findMemberByInviteCode" resultType="java.lang.Integer">
+        select id from member where invite_code = #{invite_code}
+    </select>
+    <insert id="register">
+        insert into member (username,nickname,invite_id,password,created_at) values (#{username},#{nickname},#{pid},#{password},now())
+    </insert>
+
+    <insert id="createMember" useGeneratedKeys="true" keyProperty="id">
+        <selectKey keyProperty="id" resultType="int" order="AFTER">
+            SELECT last_insert_id();
+        </selectKey>
+        insert into member (username,nickname,invite_id,password,created_at) values (#{username},#{nickname},#{invite_id},#{password},now())
+    </insert>
+
+    <resultMap id="getFundListByPage" type="com.stock.models.frontend.UserBill">
+        <id property="id" column="id"></id>
+        <result property="mark" column="mark"></result>
+        <result property="amount" column="amount"></result>
+        <result property="after_amount" column="after_amount"></result>
+        <result property="type" column="type"></result>
+        <result property="add_time" column="add_time"></result>
+    </resultMap>
+    <select id="getFundListByPage" resultMap="getFundListByPage" resultType="java.util.List">
+        select * from user_bill where uid = #{uid}
+        <if test="state != null and state != 0">
+            and type = #{state}
+        </if>
+    </select>
+    <resultMap id="getfinaceListByPage" type="com.stock.models.frontend.UserBill">
+        <id property="id" column="id"></id>
+        <result property="mark" column="mark"></result>
+        <result property="amount" column="amount"></result>
+        <result property="after_amount" column="after_amount"></result>
+        <result property="type" column="type"></result>
+        <result property="add_time" column="add_time"></result>
+        <result property="uid" column="uid"></result>
+        <result property="mark" column="mark"></result>
+        <result property="link_id" column="link_id"></result>
+        <association property="member" javaType="java.util.Map">
+            <id property="id" column="mid"></id>
+            <result property="nickname" column="nickname"></result>
+            <result property="username" column="username"></result>
+        </association>
+    </resultMap>
+    <select id="getfinaceListByPage" resultMap="getfinaceListByPage,countp" resultType="java.util.List">
+        select SQL_CALC_FOUND_ROWS m.nickname,m.username,m.invite_id,m.id as mid,b.* from user_bill b left join member m on m.id = b.uid  where 1= 1
+        <if test="nickname != null and nickname != ''">
+            and m.nickname = #{nickname}
+        </if>
+        <if test="state != null and state != 0">
+            and b.type = #{state}
+        </if>
+        <if test="pid != null and pid != null">
+            and m.invite_id  = #{pid}
+        </if>
+    </select>
+    <select id="getMemberInfo" resultType="java.util.Map">
+     select COALESCE((SELECT sum(`deposit`) from member_heyue_apply where member_id = #{id} and apply_state = 1),0) as deposit , (SELECT count(*)  from member_heyue_apply where member_id = #{id} and apply_state = 1) as count ,nickname,amount from member where id = #{id}
+    </select>
+
+
+    <resultMap type="java.lang.Integer" id="countp">
+        <result column="total"/>
+    </resultMap>
+    <select id="getMemberListByPage" resultMap="findMember_,countp">
+        select SQL_CALC_FOUND_ROWS member.*,user_bank.bank_user,user_bank.id as ubid,COALESCE(sum(`deposit`),0) as deposit, admin_user.id as ad_id,admin_user.username as ad_username,fk.id as fengkong_id, fk.uid,fk.yj_rate,fk.is_kc,fk.kc_max,fk.single_max,fk.forbid_list from member left join admin_user on member.invite_id = admin_user.id left join member_heyue_apply ma on ma.member_id = member.id and ma.apply_state = 1 left join user_bank on user_bank.uid = member.id left join fengkong fk on fk.uid = member.id where 1 = 1
+        <if test="pid != null and pid != '' ">
+            and invite_id = #{pid}
+        </if>
+        <if test="nickname != null and nickname != '' ">
+            and nickname = #{nickname}
+        </if>
+        <if test="admin_username != null and admin_username != '' ">
+            and admin_user.username = #{admin_username}
+        </if>
+        <if test="status != null and status != '' ">
+            and member.status = #{status}
+        </if>
+        group by member.id
+    </select>
+    <update id="updateMemberState">
+        update member set status  = #{status}  where id = #{id} ;
+    </update>
+    <update id="updateUserNickName">
+        update member set nickname = #{bank_user} where id=#{uid}
+    </update>
+    <resultMap type="java.lang.Integer" id="ccount">
+        <result column="total"/>
+    </resultMap>
+
+    <select id="findMemberInterestListByPage" resultMap="findMemberInterestListByPage,ccount">
+        select SQL_CALC_FOUND_ROWS b.* ,m.id mid,m.username as m_username,m.nickname,ad.username as ad_username,ad.id as ad_id from user_bill b left join member m on b.uid = m.id left join admin_user ad on ad.id= m.invite_id where  b.type = 12
+        <include refid="cif"/>
+    </select>
+    <select id="findMemberSumInterest" resultType="java.lang.Double">
+        select COALESCE(sum( b.amount ),0) from user_bill b left join member m on b.uid = m.id  left join admin_user ad on ad.id= m.invite_id where b.type = 12
+        <include refid="cif"/>
+    </select>
+    <sql id="cif">
+        <if test="username != null and username != '' ">
+            and m.nickname = #{username}
+        </if>
+        <if test="admin_username != null and admin_username != ''">
+            and ad.username = #{admin_username}
+        </if>
+
+        <if test="start_time == null and end_time != null">
+            and add_time &lt; #{end_time}
+        </if>
+        <if test="start_time != null and end_time == null">
+            and add_time &gt; #{start_time}
+        </if>
+
+        <if test="start_time != null and end_time != null">
+            and add_time between #{start_time} and #{end_time}
+        </if>
+
+        <if test="pid != null and pid != null">
+            and m.invite_id  = #{pid}
+        </if>
+
+    </sql>
+    <resultMap id="findMemberInterestListByPage" type="com.stock.models.frontend.UserBill">
+        <id property="id" column="id"></id>
+        <result property="amount" column="amount"></result>
+        <result property="add_time" column="add_time"></result>
+        <result property="link_id" column="link_id"></result>
+        <association property="member" javaType="java.util.Map">
+            <id property="id" column="mid"></id>
+            <id property="username" column="m_username"></id>
+            <result column="nickname" property="nickname"></result>
+            <association property="p_admin" javaType="java.util.Map">
+                <id column="ad_id" property="id"></id>
+                <result column="ad_username" property="username"></result>
+            </association>
+        </association>
+    </resultMap>
+</mapper>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.BrokerMapper" >
+   <resultMap id="getBroker" type="com.stock.models.broker">
+       <id property="id" column="id"></id>
+       <result property="account" column="account"></result>
+       <result property="password" column="password"></result>
+       <result property="status" column="status"></result>
+       <result property="num" column="num"></result>
+       <result property="amount" column="amount"></result>
+       <result property="total_amount" column="total_amount"></result>
+       <result property="ip" column="ip"></result>
+       <result property="port" column="port"></result>
+   </resultMap>
+    <select id="getChuQuan" resultType="java.util.Map">
+        select * from chuquan
+    </select>
+   <select id="getAll" resultMap="getBroker" resultType="java.util.List">
+       select * from broker order by amount desc
+   </select>
+    <insert id="addChuQuan">
+        insert into chuquan (stock_code,price) values (#{stock_code},#{price})
+    </insert>
+
+    <select id="findPriceByCode" resultType="java.math.BigDecimal">
+        select price from chuquan where stock_code = #{stock_code} limit 1
+    </select>
+    <delete id="deleteChuQuan">
+        delete from chuquan where id = #{id}
+    </delete>
+    <update id="updateChuQuan">
+        update chuquan set
+        <if test="stock_code != null and stock_code != ''">
+        stock_code = #{stock_code}
+        </if>
+        <if test="price != null and price != ''">
+            ,price = #{price}
+        </if>
+        where id = #{id}
+    </update>
+    <select id="findBrokerById" parameterType="java.lang.Integer" resultMap="getBroker">
+        select * from broker where id = #{broker_id}
+    </select>
+    <select id="getAllValid" resultMap="getBroker" resultType="java.util.List">
+       select * from broker where status = 1 order by num asc
+   </select>
+    <update id="updateMoney">
+        update broker set amount = #{amount},total_amount = #{total_amount} where id = #{id}
+    </update>
+
+    <insert id="addBroker" parameterType="com.stock.models.broker">
+        insert into broker (account,password,num,status,ip,port)  values (#{account},#{password},#{num},#{status},#{ip},#{port})
+    </insert>
+    <update id="updateBroker" parameterType="com.stock.models.broker">
+        update broker set account = #{account},password=#{password},ip=#{ip},port= #{port},status =#{status},num=#{num} where id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="com.stock.models.broker">
+        update broker set status = #{status} where id = #{id}
+    </update>
+</mapper>

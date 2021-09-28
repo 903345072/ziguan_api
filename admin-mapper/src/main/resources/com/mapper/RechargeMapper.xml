@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mapper.RechargeMapper" >
+
+    <resultMap id="findRechargeList" type="com.stock.models.Recharge">
+         <id column="id" property="id"></id>
+         <result column="amount" property="amount"></result>
+         <result column="add_time" property="add_time"></result>
+         <result column="type" property="type"></result>
+         <result column="state" property="state"></result>
+        <association property="member" javaType="java.util.Map">
+            <id column="id" property="id"></id>
+            <result column="username" property="username"></result>
+            <result column="nickname" property="nickname"></result>
+        </association>
+    </resultMap>
+
+    <resultMap type="java.lang.Integer" id="counts">
+        <result column="total"/>
+    </resultMap>
+
+   <select id="findRechargeListByPage" resultMap="findRechargeList,counts">
+       select SQL_CALC_FOUND_ROWS w.*,m.username,m.nickname,m.id from member_recharge w left join member m on m.id=w.uid where 1= 1
+       <if test="username != null and username != '' ">
+           and m.username = #{username}
+       </if>
+       <if test="state != null and state != '' ">
+           and w.state = #{state}
+       </if>
+       <if test="type != null and type != '' ">
+           and w.type = #{type}
+       </if>
+   </select>
+
+    <update id="updateRechargeState">
+        update member_recharge set state = #{state} where id = #{id}
+    </update>
+
+<select id="findOneRecharge" resultType="com.stock.models.Recharge">
+    select * from member_recharge where id = #{id}
+</select>
+    <insert id="dorecharge">
+        insert into member_recharge (uid,amount,state,type,add_time) values (#{uid},#{amount},#{state},#{type},now())
+    </insert>
+</mapper>
