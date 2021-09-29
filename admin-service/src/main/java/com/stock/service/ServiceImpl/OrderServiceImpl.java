@@ -233,7 +233,7 @@ public class OrderServiceImpl implements OrderService {
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
 
         Map res = XhbUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
-        if((Integer) res.get("code") != 0){
+        if(!res.get("code").equals("0")){
             throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
         }
         return  doorder(res,order);
@@ -315,7 +315,7 @@ public class OrderServiceImpl implements OrderService {
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
         JSONObject jsonObject = TdxUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
        String str = (String)jsonObject.get("msg");
-       if(str.contains("ErrorCode:-1") && !str.contains("该笔委托已经全部成交或全部撤单")){
+       if(!jsonObject.get("code").equals("0")){
                 throw new RuntimeException((String) jsonObject.get("msg"));
        }
        nettyOrder order_ = findOrderById(id);

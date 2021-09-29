@@ -344,7 +344,7 @@ public class workSchedule {
 
     //处理部撤
     //@Scheduled(cron = "0 10 15 * * ?")
-    @Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0/33 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void partTrade(){
         List<broker> all = brokerService.getAll();
@@ -491,7 +491,7 @@ public class workSchedule {
 
 
 
-    @Scheduled(cron = "0/10 * 8-23 * * ?")
+    @Scheduled(cron = "0/8 * 8-23 * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateChenjiao(){
         List<broker> all = brokerService.getAll();
@@ -554,7 +554,7 @@ public class workSchedule {
         });
     }
 
-    @Scheduled(cron = "0/32 * * * * ?")
+    @Scheduled(cron = "* 0/2 * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateBrokerMoney(){
         List<broker> all = brokerService.getAll();
