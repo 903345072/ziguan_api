@@ -317,7 +317,7 @@ public class OrderServiceImpl implements OrderService {
     public int apply_cancel(Integer id) {
         nettyOrder order = findOrderById(id);
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
-        JSONObject jsonObject = TdxUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
+        JSONObject jsonObject = XhbUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
        String str = (String)jsonObject.get("msg");
        if((Integer) jsonObject.get("code") != 1){
                 throw new RuntimeException((String) jsonObject.get("msg"));
