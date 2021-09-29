@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class OrderServiceImpl implements OrderService {
@@ -241,9 +243,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(rollbackFor = Exception.class)
     public int doorder(Map res,Order order){
-        List data = (List) res.get("data");
-        Map order_data = (Map) data.get(0);
-        order.setContract_no((String) order_data.get("entrust_no"));
+        String msg = (String)res.get("msg");
+        String regEx="[^0-9]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(msg);
+        order.setContract_no(m.replaceAll("").trim());
         BigDecimal hand = BigDecimal.valueOf(order.getBuy_hand());
         BigDecimal price = BigDecimal.valueOf(order.getBuy_price());
         int ret ;
