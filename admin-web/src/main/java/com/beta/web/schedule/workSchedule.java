@@ -9,7 +9,7 @@ import com.stock.models.frontend.Member;
 import com.stock.models.frontend.nettyOrder;
 import com.stock.service.*;
 import com.stock.service.ServiceImpl.OrderServiceImpl;
-
+import com.sun.corba.se.pept.broker.Broker;
 import com.util.BillCode;
 import com.util.RetResponse;
 import com.util.TdxUtil;
@@ -50,25 +50,24 @@ public class workSchedule {
     @Autowired
     private RedisTemplate redisTemplate_;
 
-
     /**
      * 检查止盈止损
      */
-     @Scheduled(cron = "0 0/1 9-14 * * ?")
+    @Scheduled(cron = "0 0/1 9-14 * * ?")
     //@Scheduled(cron = "0/5 * * * * ?")
-    @Transactional(rollbackFor=Exception.class)
+    //@Transactional(rollbackFor=Exception.class)
     public void checkStrategy() throws InterruptedException {
 
         List<com.stock.models.MemberHeYueApply> list = memberHeYueApply.selectMemberHeYueByStates();
-         List<Map> chuQuan = brokerService.getChuQuan();
-         List<String> stock_codes = chuQuan.stream().map(d -> (String)d.get("stock_code")).collect(Collectors.toList());
-         list.forEach( s->{//and trade_direction = 1
+        List<Map> chuQuan = brokerService.getChuQuan();
+        List<String> stock_codes = chuQuan.stream().map(d -> (String)d.get("stock_code")).collect(Collectors.toList());
+        list.forEach( s->{//and trade_direction = 1
             List<nettyOrder> activeOrderMoney = s.getOrder_list();
             double l = activeOrderMoney.stream().mapToDouble(d->{
                 BigDecimal price = sina.setDataSource(d.getStock_code()).getStockPrice();
-               if(stock_codes.contains(d.getStock_code())){
+                if(stock_codes.contains(d.getStock_code())){
                     price = brokerService.findPriceByCode(d.getStock_code());
-               }
+                }
                 if(price == null){
                     return 10000000;
                 }
@@ -218,6 +217,7 @@ public class workSchedule {
         map.put("id",order.getId());
         map.put("buy_hand",chengjiao_num);
         map.put("pid",order.getPid());
+
         Map memberFengKong = memberService.findMemberFengKong(order.getMember_id());
         BigDecimal yj_rate = (BigDecimal)memberFengKong.get("yj_rate");
         BigDecimal sx_fee =  get_sx_fee(new BigDecimal(real_hand),buy_price,yj_rate);
@@ -244,28 +244,28 @@ public class workSchedule {
             bill2.put("after_amount",memberHeYue_1.getTotal_capital());
             bill2.put("type", BillCode.STOCK_BUY_FEE.getCode());
             memberService.addBill(bill2);
-                BigDecimal subtract = order.getFreeze_money().subtract(real_trade_money);//-5
-                if(subtract.compareTo(BigDecimal.ZERO) != 0){
-                    Map m1 = new HashMap();
-                    m1.put("member_heyue_id",order.getMember_heyue_id());
-                    if(subtract.compareTo(BigDecimal.ZERO) <0){
-                        subtract = subtract.abs();
-                        m1.put("amount",subtract);
-                        memberHeYueApply.decreaseHeYueMoney(m1);
-                        com.stock.models.MemberHeYueApply memberHeYue_ = this.memberHeYueApply.selectHeyueById(order.getMember_heyue_id());
-                        Map bill = new HashMap();
-                        bill.put("member_id",order.getMember_id());
-                        bill.put("link_id",order.getId());
-                        bill.put("mark","用户"+order.getMember_id()+"买入股票补充差价"+subtract.setScale(2,RoundingMode.HALF_UP).toString()+"元");
-                        bill.put("amount",subtract);
-                        bill.put("after_amount",memberHeYue_.getTotal_capital());
-                        bill.put("type", BillCode.STOCK_TRADE_DIFF.getCode());
-                        memberService.addBill(bill);
-                    }else{
+            BigDecimal subtract = order.getFreeze_money().subtract(real_trade_money);//-5
+            if(subtract.compareTo(BigDecimal.ZERO) != 0){
+                Map m1 = new HashMap();
+                m1.put("member_heyue_id",order.getMember_heyue_id());
+                if(subtract.compareTo(BigDecimal.ZERO) <0){
+                    subtract = subtract.abs();
+                    m1.put("amount",subtract);
+                    memberHeYueApply.decreaseHeYueMoney(m1);
+                    com.stock.models.MemberHeYueApply memberHeYue_ = this.memberHeYueApply.selectHeyueById(order.getMember_heyue_id());
+                    Map bill = new HashMap();
+                    bill.put("member_id",order.getMember_id());
+                    bill.put("link_id",order.getId());
+                    bill.put("mark","用户"+order.getMember_id()+"买入股票补充差价"+subtract.setScale(2,RoundingMode.HALF_UP).toString()+"元");
+                    bill.put("amount",subtract);
+                    bill.put("after_amount",memberHeYue_.getTotal_capital());
+                    bill.put("type", BillCode.STOCK_TRADE_DIFF.getCode());
+                    memberService.addBill(bill);
+                }else{
 //                        m1.put("amount",subtract);
 //                        memberHeYueApply.increaseHeYueMoney(m1);
-                    }
                 }
+            }
         }
         nettyOrder p_order = orderServiceImpl.findOrderById(order.getPid());
         if(order.getPid() != 0 && p_order.getStock_status() != 1 ){//加仓或减仓
@@ -312,12 +312,12 @@ public class workSchedule {
                 Map ddw = new HashMap();
                 ddw.put("id",p_order.getId());
                 ddw.put("hand",real_hand);
-                 orderServiceImpl.addSellHand(ddw);
+                orderServiceImpl.addSellHand(ddw);
             }
             sum_order_money = sum_order_money.add(new BigDecimal((0-p_order.getProfit())));
 
             //buy_price = parent_stock_status==4? new BigDecimal(0):sum_order_money.divide(sum_order_hand,RoundingMode.HALF_UP).setScale(3,RoundingMode.HALF_UP);
-           buy_price = parent_stock_status==4? new BigDecimal(0):cal_order_money.divide(sum_order_hand,3,RoundingMode.HALF_UP);
+            buy_price = parent_stock_status==4? new BigDecimal(0):cal_order_money.divide(sum_order_hand,3,RoundingMode.HALF_UP);
             BigDecimal diff_price = last_price.subtract(new BigDecimal(p_order.getBuy_price())).setScale(3,RoundingMode.HALF_UP);
             BigDecimal money = diff_price.multiply(new BigDecimal(real_hand));
             if(order.getTrade_direction() == 2){
@@ -344,7 +344,7 @@ public class workSchedule {
 
     //处理部撤
     //@Scheduled(cron = "0 10 15 * * ?")
-    @Scheduled(cron = "0/33 * * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void partTrade(){
         List<broker> all = brokerService.getAll();
@@ -360,51 +360,62 @@ public class workSchedule {
                     weituo_order.forEach(e->{
                         nettyOrder order = (nettyOrder)e;
                         weituo_data.forEach(s->{
-                            if(s.get("合同编号").equals(order.getContract_no())){
-                                if( Integer.parseInt((String) s.get("撤消数量")) >0 && !s.get("撤消数量").equals(s.get("委托数量")) ){
+                            String d = "";
+                            if(s.containsKey("委托编号")){
+                                d = "委托编号";
+                            }
+                            if(s.containsKey("合同编号")){
+                                d = "合同编号";
+                            }
+                            if(s.get(d).equals(order.getContract_no())){
+                                String cc = "";
+                                if(s.containsKey("撤消数量")){
+                                    cc = "撤消数量";
+                                }
+                                if(s.containsKey("撤单数量")){
+                                    cc = "撤单数量";
+                                }
+                                if( Integer.parseInt((String) s.get(cc)) >0 && !s.get(cc).equals(s.get("委托数量")) ){
                                     Integer chengjiao_num =  Double.valueOf((String) s.get("成交数量")).intValue();
                                     BigDecimal weituo_num = new BigDecimal((String) s.get("委托数量"));
                                     BigDecimal bucheng_can_weituo = weituo_num.subtract(new BigDecimal(chengjiao_num));
 
-                                   if(order.getTrade_direction() == 1){  //买退钱
-                                       BigDecimal bank_money = bucheng_can_weituo.multiply(new BigDecimal((String) s.get("委托价格")));
-                                       if(bank_money.doubleValue()>0){
-                                           Map data = new HashMap();
-                                           data.put("amount",bank_money);
-                                           data.put("member_heyue_id",order.getMember_heyue_id());
-                                           memberHeYueApply.increaseHeYueMoney(data);
-                                           com.stock.models.MemberHeYueApply memberHeYue = this.memberHeYueApply.selectHeyueById(order.getMember_heyue_id());
-                                           Map bill = new HashMap();
-                                           bill.put("member_id",order.getMember_id());
-                                           bill.put("link_id",order.getId());
-                                           String str = "订单部分撤回增加";
-                                           bill.put("mark","用户"+order.getMember_id()+str+bank_money.setScale(2,RoundingMode.HALF_UP).toString()+"元");
-                                           bill.put("amount",bank_money);
-                                           bill.put("after_amount",memberHeYue.getTotal_capital());
-                                           bill.put("type", BillCode.CANCLE_ORDER.getCode());
-                                           memberService.addBill(bill);
-                                           Map map1 = new HashMap<>();
-                                           map1.put("id",order.getId());
-                                           orderServiceImpl.updateOrderToPart(map1);
-                                       }
-                                   }else{
-                                       Map map1 = new HashMap<>();
-                                       map1.put("id",order.getId());
-                                       orderServiceImpl.updateOrderToPart(map1);
-                                       Map unfreeze_map = new HashMap();
-                                       unfreeze_map.put("id",order.getPid());
-                                       unfreeze_map.put("hand",bucheng_can_weituo);
-
-                                       orderServiceImpl.unfreeze_hand(unfreeze_map);
-                                   }
+                                    if(order.getTrade_direction() == 1){  //买退钱
+                                        BigDecimal bank_money = bucheng_can_weituo.multiply(new BigDecimal((String) s.get("委托价格")));
+                                        if(bank_money.doubleValue()>0){
+                                            Map data = new HashMap();
+                                            data.put("amount",bank_money);
+                                            data.put("member_heyue_id",order.getMember_heyue_id());
+                                            memberHeYueApply.increaseHeYueMoney(data);
+                                            com.stock.models.MemberHeYueApply memberHeYue = this.memberHeYueApply.selectHeyueById(order.getMember_heyue_id());
+                                            Map bill = new HashMap();
+                                            bill.put("member_id",order.getMember_id());
+                                            bill.put("link_id",order.getId());
+                                            String str = "订单部分撤回增加";
+                                            bill.put("mark","用户"+order.getMember_id()+str+bank_money.setScale(2,RoundingMode.HALF_UP).toString()+"元");
+                                            bill.put("amount",bank_money);
+                                            bill.put("after_amount",memberHeYue.getTotal_capital());
+                                            bill.put("type", BillCode.CANCLE_ORDER.getCode());
+                                            memberService.addBill(bill);
+                                            Map map1 = new HashMap<>();
+                                            map1.put("id",order.getId());
+                                            orderServiceImpl.updateOrderToPart(map1);
+                                        }
+                                    }else{
+                                        Map map1 = new HashMap<>();
+                                        map1.put("id",order.getId());
+                                        orderServiceImpl.updateOrderToPart(map1);
+                                        Map unfreeze_map = new HashMap();
+                                        unfreeze_map.put("id",order.getPid());
+                                        unfreeze_map.put("hand",bucheng_can_weituo);
+                                        orderServiceImpl.unfreeze_hand(unfreeze_map);
+                                    }
                                 }
-
                             }
                         });
                     });
                 }
             }
-
         });
     }
 
@@ -429,9 +440,23 @@ public class workSchedule {
                         weituo_order.forEach(e->{
                             nettyOrder order = (nettyOrder)e;
                             weituo_data.forEach(s->{
-                                if(s.get("合同编号").equals(order.getContract_no())  ){
+                                String a = "";
+                                if(s.containsKey("委托编号")){
+                                    a = "委托编号";
+                                }
+                                if(s.containsKey("合同编号")){
+                                    a = "合同编号";
+                                }
+                                if(s.get(a).equals(order.getContract_no())  ){
                                     int flag = 0;
-                                    if((s.get("委托数量").equals(s.get("撤消数量")))){
+                                    String cc = "";
+                                    if(s.containsKey("撤消数量")){
+                                        cc = "撤消数量";
+                                    }
+                                    if(s.containsKey("撤单数量")){
+                                        cc = "撤单数量";
+                                    }
+                                    if((s.get("委托数量").equals(s.get(cc)))){
                                         flag = 1;
                                     }
                                     if(flag>0){
@@ -491,7 +516,7 @@ public class workSchedule {
 
 
 
-    @Scheduled(cron = "0/8 * 8-23 * * ?")
+    @Scheduled(cron = "0/10 * 8-23 * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateChenjiao(){
         List<broker> all = brokerService.getAll();
@@ -514,8 +539,22 @@ public class workSchedule {
 
                                             chengjiao1.setHand(Double.valueOf((String) s.get("成交数量")).intValue());
                                             chengjiao1.setCj_no((String) s.get("成交编号"));
-                                            chengjiao1.setContract_no((String) s.get("合同编号"));
-                                            chengjiao1.setCj_price(new BigDecimal((String) s.get("成交均价")));
+                                            String d = "";
+                                            if(s.containsKey("委托编号")){
+                                                d = "委托编号";
+                                            }
+                                            if(s.containsKey("合同编号")){
+                                                d = "合同编号";
+                                            }
+                                            chengjiao1.setContract_no((String) s.get(d));
+                                            String pp = "";
+                                            if(s.containsKey("成交均价")){
+                                                pp = "成交均价";
+                                            }
+                                            if(s.containsKey("成交价格")){
+                                                pp = "成交价格";
+                                            }
+                                            chengjiao1.setCj_price(new BigDecimal((String) s.get(pp)));
                                             if(s.get("成交编号") == "" || s.get("成交编号") == null){
                                                 return;
                                             }
@@ -540,7 +579,8 @@ public class workSchedule {
     }
 
 
-    //@Scheduled(cron = "0/30 * 0-14 * * ?")
+    @Scheduled(cron = "0/30 * 0-14 * * ?")
+    //@Scheduled(cron = "0 0/2 * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void checkHeYue(){
         List<com.stock.models.MemberHeYueApply> canEffectHeYue = memberHeYueApply.findCanEffectHeYue();
@@ -554,7 +594,7 @@ public class workSchedule {
         });
     }
 
-    @Scheduled(cron = "* 0/2 * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateBrokerMoney(){
         List<broker> all = brokerService.getAll();
@@ -562,12 +602,12 @@ public class workSchedule {
             Map map = XhbUtil.queryData("thsauto/balance",s.getAccount(),s.getPassword(),s.getIp(),s.getPort());
             Map d = (Map) map.get("data");
             if(d != null){
-               BigDecimal amount = new BigDecimal((String) d.get("可用金额"));
-               BigDecimal total_amount = new BigDecimal((String) d.get("总资产"));
-               Map map_ = new HashMap();
-               map_.put("id",s.getId());
-               map_.put("amount",amount);
-               map_.put("total_amount",total_amount);
+                BigDecimal amount = new BigDecimal((String) d.get("可用金额"));
+                BigDecimal total_amount = new BigDecimal((String) d.get("总资产"));
+                Map map_ = new HashMap();
+                map_.put("id",s.getId());
+                map_.put("amount",amount);
+                map_.put("total_amount",total_amount);
                 brokerService.updateMoney(map_);
             }
             try {
@@ -588,7 +628,6 @@ public class workSchedule {
         all.forEach(p->{
             Map weituo = XhbUtil.queryData("thsauto/orders/active",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
             List<Map> weituo_data = (List<Map>)weituo.get("data");
-
             if(weituo_data != null){
                 Map param = new HashMap();
                 param.put("stock_status",1);
@@ -607,7 +646,14 @@ public class workSchedule {
                         weituo_order.forEach(e->{
                             nettyOrder order = (nettyOrder)e;
                             weituo_data.forEach(s->{
-                                if(s.get("合同编号").equals(order.getContract_no())){
+                                String a = "";
+                                if(s.containsKey("委托编号")){
+                                    a = "委托编号";
+                                }
+                                if(s.containsKey("合同编号")){
+                                    a = "合同编号";
+                                }
+                                if(s.get(a).equals(order.getContract_no())){
                                     updateOrder(order, new BigDecimal((String)s.get("委托价格")),1,new BigDecimal((String) s.get("委托数量")) );
                                 }
                             });
