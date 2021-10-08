@@ -342,11 +342,11 @@ public class workSchedule {
     }
 
 
-    //处理部撤
+    //处理撤销和部撤
     //@Scheduled(cron = "0 10 15 * * ?")
-    @Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0/32 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
-    public void partTrade(){
+    public void checkCancel(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
             Map weituo = XhbUtil.queryData("thsauto/orders/active",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
@@ -360,6 +360,7 @@ public class workSchedule {
                     weituo_order.forEach(e->{
                         nettyOrder order = (nettyOrder)e;
                         weituo_data.forEach(s->{
+
                             String d = "";
                             if(s.containsKey("委托编号")){
                                 d = "委托编号";
@@ -368,6 +369,7 @@ public class workSchedule {
                                 d = "合同编号";
                             }
                             if(s.get(d).equals(order.getContract_no())){
+                                int flag = 0;
                                 String cc = "";
                                 if(s.containsKey("撤消数量")){
                                     cc = "撤消数量";
@@ -375,11 +377,10 @@ public class workSchedule {
                                 if(s.containsKey("撤单数量")){
                                     cc = "撤单数量";
                                 }
-                                if( Integer.parseInt((String) s.get(cc)) >0 && !s.get(cc).equals(s.get("委托数量")) ){
+                                if( Integer.parseInt((String) s.get(cc)) >0 &&  Double.valueOf((String)s.get(cc)).intValue() !=   Double.valueOf((String)s.get("委托数量")).intValue()){
                                     Integer chengjiao_num =  Double.valueOf((String) s.get("成交数量")).intValue();
                                     BigDecimal weituo_num = new BigDecimal((String) s.get("委托数量"));
                                     BigDecimal bucheng_can_weituo = weituo_num.subtract(new BigDecimal(chengjiao_num));
-
                                     if(order.getTrade_direction() == 1){  //买退钱
                                         BigDecimal bank_money = bucheng_can_weituo.multiply(new BigDecimal((String) s.get("委托价格")));
                                         if(bank_money.doubleValue()>0){
@@ -410,7 +411,13 @@ public class workSchedule {
                                         unfreeze_map.put("hand",bucheng_can_weituo);
                                         orderServiceImpl.unfreeze_hand(unfreeze_map);
                                     }
+                                }else if (Double.valueOf((String)s.get(cc)).intValue() ==   Double.valueOf((String)s.get("委托数量")).intValue()){
+
+                                    updateOrder(order, new BigDecimal((String)s.get("委托价格")),1,new BigDecimal((String) s.get("委托数量")) );
+
                                 }
+
+
                             }
                         });
                     });
@@ -420,56 +427,6 @@ public class workSchedule {
     }
 
 
-    //检查撤销订单
-    //@Scheduled(cron = "0 0/1 * * * ?")
-    @Scheduled(cron = "0/25 * * * * ?")
-    @Transactional(rollbackFor=Exception.class)
-    public void checkCancel(){
-        List<broker> all = brokerService.getAll();
-        all.forEach(p->{
-            Map weituo = XhbUtil.queryData("thsauto/orders/active",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
-            List<Map> weituo_data = (List<Map>)weituo.get("data");
-            if(weituo_data != null){
-                Map param = new HashMap();
-                param.put("stock_status",1);
-                //param.put("cacel_status",1);
-                param.put("broker_id",p.getId());
-                List weituo_order = orderServiceImpl.findOrderByStateByBrokerId(param);
-                if(weituo_order != null){
-                    if (weituo_order.size()>0){
-                        weituo_order.forEach(e->{
-                            nettyOrder order = (nettyOrder)e;
-                            weituo_data.forEach(s->{
-                                String a = "";
-                                if(s.containsKey("委托编号")){
-                                    a = "委托编号";
-                                }
-                                if(s.containsKey("合同编号")){
-                                    a = "合同编号";
-                                }
-                                if(s.get(a).equals(order.getContract_no())  ){
-                                    int flag = 0;
-                                    String cc = "";
-                                    if(s.containsKey("撤消数量")){
-                                        cc = "撤消数量";
-                                    }
-                                    if(s.containsKey("撤单数量")){
-                                        cc = "撤单数量";
-                                    }
-                                    if((s.get("委托数量").equals(s.get(cc)))){
-                                        flag = 1;
-                                    }
-                                    if(flag>0){
-                                        updateOrder(order, new BigDecimal((String)s.get("委托价格")),flag,new BigDecimal((String) s.get("委托数量")) );
-                                    }
-                                }
-                            });
-                        });
-                    }
-                }
-            }
-        });
-    }
 
     public void updateOrder(nettyOrder order,BigDecimal weituo_price,int flag,BigDecimal weituo_num){
         if(order.getStock_status() == 1){
@@ -516,7 +473,7 @@ public class workSchedule {
 
 
 
-    @Scheduled(cron = "0/10 * 8-23 * * ?")
+    @Scheduled(cron = "0/14 * 8-23 * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateChenjiao(){
         List<broker> all = brokerService.getAll();
@@ -579,22 +536,9 @@ public class workSchedule {
     }
 
 
-    @Scheduled(cron = "0/30 * 0-14 * * ?")
-    //@Scheduled(cron = "0 0/2 * * * ?")
-    @Transactional(rollbackFor=Exception.class)
-    public void checkHeYue(){
-        List<com.stock.models.MemberHeYueApply> canEffectHeYue = memberHeYueApply.findCanEffectHeYue();
-        canEffectHeYue.forEach(s->{
-            Map d = new HashMap();
-            d.put("apply_state",1);
-            d.put("id",s.getId());
-            memberHeYueApply.updateHeYueApplyState(d);
-            //memberService.renewHeYue(s.getId(),1);//tag1
-            memberService.xuyue(s.getId());//再放回队列
-        });
-    }
 
-    @Scheduled(cron = "0/30 * * * * ?")
+
+    @Scheduled(cron = "0/55 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateBrokerMoney(){
         List<broker> all = brokerService.getAll();

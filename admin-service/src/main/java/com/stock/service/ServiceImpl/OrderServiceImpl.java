@@ -235,9 +235,9 @@ public class OrderServiceImpl implements OrderService {
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
 
         Map res = XhbUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
-        if((Integer) res.get("code") != 1){
-            throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
-        }
+//        if((Integer) res.get("code") != 1){
+//            throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
+//        }
         return  doorder(res,order);
     }
 
