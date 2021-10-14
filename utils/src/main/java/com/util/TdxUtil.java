@@ -40,10 +40,9 @@ public class TdxUtil {
         return forObject;
     }
 
-    public static   JSONObject  cancelOrder_(String stock_code,String orderID,String account ,String password,String tx_password,String ip,short port){
+    public static   Map  cancelOrder_(String stock_code,String orderID,String account ,String password,String tx_password,String ip,short port){
         RestTemplate restTemplate = new RestTemplate();
         JSONObject forObject1 = restTemplate.getForObject("http://8.134.124.134:82/cancelOrder/"+stock_code+"/"+orderID+"/"+account+"/"+password+"/"+tx_password+"/"+ip+"/"+port, JSONObject.class);
-        System.out.println(forObject1);
         return forObject1;
     }
 
