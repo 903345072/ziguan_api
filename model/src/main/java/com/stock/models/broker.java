@@ -13,6 +13,26 @@ public class broker {
     public String ip;
     public short port;
 
+
+    public String getSz_gddm() {
+        return sz_gddm;
+    }
+
+    public void setSz_gddm(String sz_gddm) {
+        this.sz_gddm = sz_gddm;
+    }
+
+    public String getSh_gddm() {
+        return sh_gddm;
+    }
+
+    public void setSh_gddm(String sh_gddm) {
+        this.sh_gddm = sh_gddm;
+    }
+
+    public String sz_gddm;
+    public String sh_gddm;
+
     public short getPort() {
         return port;
     }

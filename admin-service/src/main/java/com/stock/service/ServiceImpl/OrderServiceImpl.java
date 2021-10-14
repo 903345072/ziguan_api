@@ -24,10 +24,7 @@ import event.makeOrderEvent;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -228,26 +225,33 @@ public class OrderServiceImpl implements OrderService {
         }else{
             nettyOrder pod = orderMapper.findOrderById(order.getPid());
             broker brokerById = brokerService.findBrokerById(pod.getBroker_id());
-
             order.setBroker_id(brokerById.getId());
         }
-
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
-
-        Map res = XhbUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
-//        if((Integer) res.get("code") != 1){
-//            throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
-//        }
+        String flag = order.getStock_code().substring(0,2);
+        String gddm = "";
+        if(flag.equals("sh")){
+            gddm = member_broker.getSh_gddm();
+        }else{
+            gddm = member_broker.getSz_gddm();
+        }
+        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort(),gddm);
+        if((Integer) res.get("code") == 505){
+            throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
+        }
         return  doorder(res,order);
     }
-
+    public String getContrac_no(String str){
+        String[] split = str.split("\n");
+        List<String> strings = Arrays.asList(split);
+        String[] split1 = strings.get(1).split("\t");
+        List<String> strings1 = Arrays.asList(split1);
+        return strings1.get(0);
+    }
     @Transactional(rollbackFor = Exception.class)
     public int doorder(Map res,Order order){
         String msg = (String)res.get("msg");
-        String regEx="[^0-9]";
-        Pattern p = Pattern.compile(regEx);
-        Matcher m = p.matcher(msg);
-        order.setContract_no(m.replaceAll("").trim());
+        order.setContract_no(getContrac_no(msg));
         BigDecimal hand = BigDecimal.valueOf(order.getBuy_hand());
         BigDecimal price = BigDecimal.valueOf(order.getBuy_price());
         int ret ;
@@ -317,11 +321,11 @@ public class OrderServiceImpl implements OrderService {
     public int apply_cancel(Integer id) {
         nettyOrder order = findOrderById(id);
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
-        JSONObject jsonObject = XhbUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
+        JSONObject jsonObject = TdxUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
        String str = (String)jsonObject.get("msg");
-       if((Integer) jsonObject.get("code") != 1){
-                throw new RuntimeException((String) jsonObject.get("msg"));
-       }
+        if((Integer) jsonObject.get("code") == 505){
+            throw new RuntimeException((String) jsonObject.get("msg"));
+        }
        nettyOrder order_ = findOrderById(id);
         if(order_.getStock_status() != 1){
             throw new RuntimeException("非委托中的单不能撤销");
@@ -358,13 +362,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public int sellStock(nettyOrder order) {
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
-       Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), 1,member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
-        if((Integer) res.get("code") != 0){
+        String flag = order.getStock_code().substring(0,2);
+        String gddm = "";
+        if(flag.equals("sh")){
+            gddm = member_broker.getSh_gddm();
+        }else{
+            gddm = member_broker.getSz_gddm();
+        }
+        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), 1,member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort(),gddm);
+        if((Integer) res.get("code") == 505){
             throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
         }
-        List data = (List) res.get("data");
-        Map order_data = (Map) data.get(0);
-        order.setContract_no((String) order_data.get("orderID"));
+        String msg = (String)res.get("msg");
+        order.setContract_no(getContrac_no(msg));
         return orderMapper.sellStock(order);
     }
 

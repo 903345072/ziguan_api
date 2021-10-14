@@ -13,6 +13,8 @@
        <result property="total_amount" column="total_amount"></result>
        <result property="ip" column="ip"></result>
        <result property="port" column="port"></result>
+       <result property="sz_gddm" column="sz_gddm"></result>
+       <result property="sh_gddm" column="sh_gddm"></result>
    </resultMap>
     <select id="getChuQuan" resultType="java.util.Map">
         select * from chuquan

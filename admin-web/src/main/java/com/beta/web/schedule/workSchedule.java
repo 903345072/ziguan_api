@@ -13,7 +13,6 @@ import com.sun.corba.se.pept.broker.Broker;
 import com.util.BillCode;
 import com.util.RetResponse;
 import com.util.TdxUtil;
-import com.util.XhbUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
@@ -140,7 +139,8 @@ public class workSchedule {
     }
 
     public BigDecimal get_sx_fee(BigDecimal hand,BigDecimal buy_price,BigDecimal rate){
-        BigDecimal v = hand.multiply(buy_price).multiply(rate.divide(new BigDecimal(1000),2,RoundingMode.HALF_UP));
+       double rate_s = rate.doubleValue()/1000;
+        BigDecimal v = hand.multiply(buy_price).multiply(new BigDecimal(rate_s));
         if(v.doubleValue() < 5){
             v = new BigDecimal(5);
         }
@@ -344,12 +344,12 @@ public class workSchedule {
 
     //处理撤销和部撤
     //@Scheduled(cron = "0 10 15 * * ?")
-    @Scheduled(cron = "0/32 * * * * ?")
+    @Scheduled(cron = "0/15 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void checkCancel(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-            Map weituo = XhbUtil.queryData("thsauto/orders/active",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
             List<Map> weituo_data = (List<Map>)weituo.get("data");
             if(weituo_data != null){
                 Map param = new HashMap();
@@ -411,7 +411,7 @@ public class workSchedule {
                                         unfreeze_map.put("hand",bucheng_can_weituo);
                                         orderServiceImpl.unfreeze_hand(unfreeze_map);
                                     }
-                                }else if (Double.valueOf((String)s.get(cc)).intValue() ==   Double.valueOf((String)s.get("委托数量")).intValue()){
+                                }else if (Double.valueOf((String)s.get(cc)).intValue()>0 && Double.valueOf((String)s.get(cc)).intValue() ==   Double.valueOf((String)s.get("委托数量")).intValue()){
 
                                     updateOrder(order, new BigDecimal((String)s.get("委托价格")),1,new BigDecimal((String) s.get("委托数量")) );
 
@@ -431,12 +431,23 @@ public class workSchedule {
     public void updateOrder(nettyOrder order,BigDecimal weituo_price,int flag,BigDecimal weituo_num){
         if(order.getStock_status() == 1){
             //等于委托中才让撤单
+            int weituo_hand = order.getWeituo_hand();
+            int buy_hand = order.getBuy_hand();
             if(order.getTrade_direction() == 1){
                 Map map = new HashMap<>();
                 map.put("id",order.getId());
-                orderServiceImpl.cancelOrder(map);
+
                 //给用户合约价钱
-                BigDecimal money = new BigDecimal(order.getBuy_hand()).multiply(weituo_price);
+                BigDecimal money = new BigDecimal(0);
+                if(weituo_hand == buy_hand){
+                    money = new BigDecimal(order.getBuy_hand()).multiply(weituo_price);
+                    orderServiceImpl.cancelOrder(map);
+                }
+                if(weituo_hand > buy_hand){
+                    money = new BigDecimal(weituo_hand-buy_hand).multiply(weituo_price);
+                    map.put("state",2);
+                    orderServiceImpl.updateOrderState(map);
+                }
                 Map data = new HashMap();
                 data.put("amount",money);
                 data.put("member_heyue_id",order.getMember_heyue_id());
@@ -461,12 +472,23 @@ public class workSchedule {
                 //
                 Map map = new HashMap<>();
                 map.put("id",order.getId());
+                int hand = 0;
+                if(weituo_hand == buy_hand){
+                    hand =weituo_hand;
+                    orderServiceImpl.cancelOrder(map);
+                }
+                if(weituo_hand>buy_hand){
+                    hand = weituo_hand-buy_hand;
+                    map.put("state",2);
+                    orderServiceImpl.updateOrderState(map);
+                }
 
-                orderServiceImpl.cancelOrder(map);
+
                 Map unfreeze_map = new HashMap();
                 unfreeze_map.put("id",order.getPid());
-                unfreeze_map.put("hand",order.getBuy_hand());
+                unfreeze_map.put("hand",hand);
                 orderServiceImpl.unfreeze_hand(unfreeze_map);
+
             }
         }
     }
@@ -478,7 +500,7 @@ public class workSchedule {
     public void updateChenjiao(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-                    Map chengjiao = XhbUtil.queryData("thsauto/orders/filled",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+                    Map chengjiao = TdxUtil.queryData("3",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
                     if(chengjiao != null){
                         List<Map> chenjiao_data = (List<Map>)chengjiao.get("data");
                         if(chenjiao_data != null){
@@ -538,27 +560,24 @@ public class workSchedule {
 
 
 
-    @Scheduled(cron = "0/55 * * * * ?")
+    @Scheduled(cron = "0/10 * * * * ?")
     @Transactional(rollbackFor=Exception.class)
     public void updateBrokerMoney(){
         List<broker> all = brokerService.getAll();
         all.forEach(s->{
-            Map map = XhbUtil.queryData("thsauto/balance",s.getAccount(),s.getPassword(),s.getIp(),s.getPort());
-            Map d = (Map) map.get("data");
-            if(d != null){
-                BigDecimal amount = new BigDecimal((String) d.get("可用金额"));
-                BigDecimal total_amount = new BigDecimal((String) d.get("总资产"));
+            Map map = TdxUtil.queryData("0",s.getAccount(),s.getPassword(),s.getIp(),s.getPort());
+            List d = (List) map.get("data");
+            Map data = (Map) d.get(0);
+            if(data != null){
+                BigDecimal amount = new BigDecimal((String) data.get("可用资金"));
+                BigDecimal total_amount = new BigDecimal((String) data.get("总资产"));
                 Map map_ = new HashMap();
                 map_.put("id",s.getId());
                 map_.put("amount",amount);
                 map_.put("total_amount",total_amount);
                 brokerService.updateMoney(map_);
             }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
         });
     }
 
@@ -570,7 +589,7 @@ public class workSchedule {
     public void checkFailOrder(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-            Map weituo = XhbUtil.queryData("thsauto/orders/active",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
             List<Map> weituo_data = (List<Map>)weituo.get("data");
             if(weituo_data != null){
                 Map param = new HashMap();
