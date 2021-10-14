@@ -513,9 +513,12 @@ public class workSchedule {
                                 cc.forEach(a->{
                                     chenjiao_data.forEach(s->{
                                         if(s.get("成交编号").equals((String)a)){
+                                            String ss = "成交金额";
+                                            if(s.containsKey("发生金额")){
+                                                ss = "发生金额";
+                                            }
                                             Chengjiao chengjiao1 = new Chengjiao();
-                                            chengjiao1.setCj_money(new BigDecimal((String) s.get("成交金额")));
-
+                                            chengjiao1.setCj_money(new BigDecimal((String) s.get(ss)));
                                             chengjiao1.setHand(Double.valueOf((String) s.get("成交数量")).intValue());
                                             chengjiao1.setCj_no((String) s.get("成交编号"));
                                             String d = "";
@@ -537,7 +540,7 @@ public class workSchedule {
                                             if(s.get("成交编号") == "" || s.get("成交编号") == null){
                                                 return;
                                             }
-                                            if(Double.parseDouble((String) s.get("成交金额"))<=0){
+                                            if(Double.parseDouble((String) s.get(ss))<=0){
                                                 return;
                                             }
                                             ee.add(chengjiao1);
