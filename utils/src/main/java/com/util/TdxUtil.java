@@ -41,8 +41,8 @@ public class TdxUtil {
     }
 
     public static   Map  cancelOrder_(String stock_code,String orderID,String account ,String password,String tx_password,String ip,short port){
-        RestTemplate restTemplate = new RestTemplate();
-        JSONObject forObject1 = restTemplate.getForObject("http://8.134.124.134:82/cancelOrder/"+stock_code+"/"+orderID+"/"+account+"/"+password+"/"+tx_password+"/"+ip+"/"+port, JSONObject.class);
+        RestTemplate restTemplate1 = new RestTemplate();
+        JSONObject forObject1 = restTemplate1.getForObject("http://8.134.124.134:82/cancelOrder/"+stock_code+"/"+orderID+"/"+account+"/"+password+"/"+tx_password+"/"+ip+"/"+port, JSONObject.class);
         return forObject1;
     }
 
