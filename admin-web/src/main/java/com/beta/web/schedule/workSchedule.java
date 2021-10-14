@@ -349,7 +349,7 @@ public class workSchedule {
     public void checkCancel(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getTx_password(),p.getIp(),p.getPort());
             List<Map> weituo_data = (List<Map>)weituo.get("data");
             if(weituo_data != null){
                 Map param = new HashMap();
@@ -500,7 +500,7 @@ public class workSchedule {
     public void updateChenjiao(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-                    Map chengjiao = TdxUtil.queryData("3",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+                    Map chengjiao = TdxUtil.queryData("3",p.getAccount(),p.getPassword(),p.getTx_password(),p.getIp(),p.getPort());
                     if(chengjiao != null){
                         List<Map> chenjiao_data = (List<Map>)chengjiao.get("data");
                         if(chenjiao_data != null){
@@ -565,7 +565,7 @@ public class workSchedule {
     public void updateBrokerMoney(){
         List<broker> all = brokerService.getAll();
         all.forEach(s->{
-            Map map = TdxUtil.queryData("0",s.getAccount(),s.getPassword(),s.getIp(),s.getPort());
+            Map map = TdxUtil.queryData("0",s.getAccount(),s.getPassword(),s.getTx_password(),s.getIp(),s.getPort());
             List d = (List) map.get("data");
             Map data = (Map) d.get(0);
             if(data != null){
@@ -589,7 +589,7 @@ public class workSchedule {
     public void checkFailOrder(){
         List<broker> all = brokerService.getAll();
         all.forEach(p->{
-            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getIp(),p.getPort());
+            Map weituo = TdxUtil.queryData("2",p.getAccount(),p.getPassword(),p.getTx_password(),p.getIp(),p.getPort());
             List<Map> weituo_data = (List<Map>)weituo.get("data");
             if(weituo_data != null){
                 Map param = new HashMap();

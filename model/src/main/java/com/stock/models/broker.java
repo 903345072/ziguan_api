@@ -13,6 +13,15 @@ public class broker {
     public String ip;
     public short port;
 
+    public String getTx_password() {
+        return tx_password;
+    }
+
+    public void setTx_password(String tx_password) {
+        this.tx_password = tx_password;
+    }
+
+    public String tx_password;
 
     public String getSz_gddm() {
         return sz_gddm;

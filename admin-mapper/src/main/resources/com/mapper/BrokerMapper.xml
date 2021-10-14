@@ -7,6 +7,7 @@
        <id property="id" column="id"></id>
        <result property="account" column="account"></result>
        <result property="password" column="password"></result>
+       <result property="tx_password" column="tx_password"></result>
        <result property="status" column="status"></result>
        <result property="num" column="num"></result>
        <result property="amount" column="amount"></result>

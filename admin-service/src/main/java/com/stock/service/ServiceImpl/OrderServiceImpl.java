@@ -235,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
         }else{
             gddm = member_broker.getSz_gddm();
         }
-        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort(),gddm);
+        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), order.getTrade_direction(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getTx_password(),member_broker.getIp(),member_broker.getPort(),gddm);
         if((Integer) res.get("code") == 505){
             throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
         }
@@ -321,7 +321,7 @@ public class OrderServiceImpl implements OrderService {
     public int apply_cancel(Integer id) {
         nettyOrder order = findOrderById(id);
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
-        JSONObject jsonObject = TdxUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort());
+        JSONObject jsonObject = TdxUtil.cancelOrder_(order.getStock_code(), order.getContract_no(),member_broker.getAccount(),member_broker.getPassword(),member_broker.getTx_password(),member_broker.getIp(),member_broker.getPort());
        String str = (String)jsonObject.get("msg");
         if((Integer) jsonObject.get("code") == 505){
             throw new RuntimeException((String) jsonObject.get("msg"));
@@ -369,7 +369,7 @@ public class OrderServiceImpl implements OrderService {
         }else{
             gddm = member_broker.getSz_gddm();
         }
-        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), 1,member_broker.getAccount(),member_broker.getPassword(),member_broker.getIp(),member_broker.getPort(),gddm);
+        Map res = TdxUtil.sendOrder(order.getStock_code(), order.getBuy_hand(), order.getBuy_price(), 1,member_broker.getAccount(),member_broker.getPassword(),member_broker.getTx_password(),member_broker.getIp(),member_broker.getPort(),gddm);
         if((Integer) res.get("code") == 505){
             throw new RuntimeException("委托失败"+"券商"+res.get("msg"));
         }
