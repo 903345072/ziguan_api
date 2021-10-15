@@ -16,10 +16,6 @@ import java.util.Map;
 public class TdxUtil {
 
 
-
-
-
-
     public static Map queryData(String type,String account ,String password,String tx_password,String ip,short port){
         RestTemplate restTemplate = new RestTemplate();
         JSONObject forObject = restTemplate.getForObject("http://8.134.124.134:82/queryData/"+account+"/"+password+"/"+tx_password+"/"+ip+"/"+port+"/"+type, JSONObject.class);

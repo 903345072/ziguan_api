@@ -1,7 +1,6 @@
 package com.stock.service.ServiceImpl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.mapper.frontend.OrderMapper;
 import com.stock.models.Chengjiao;
 import com.stock.models.broker;
@@ -12,7 +11,6 @@ import com.stock.service.OrderService;
 import com.stock.service.StockDataServiceAbstract;
 import com.util.BillCode;
 import com.util.TdxUtil;
-import com.util.XhbUtil;
 import event.SellOrderEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import event.makeOrderEvent;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 public class OrderServiceImpl implements OrderService {
@@ -203,12 +198,10 @@ public class OrderServiceImpl implements OrderService {
             er.put("member_id",order.getMember_id());
             er.put("stock_code",order.getStock_code());
            nettyOrder os = orderMapper.findOrderByCode(er);
-           if(os == null){//说明第一次买这个股票，就选择钱多的账
                List<broker> allValid = brokerService.getAllValid();
                broker broker = null;
                double dd = order.getBuy_price()*order.getBuy_hand();
                for(int i =0;i<allValid.size();i++){
-
                    if(allValid.get(i).getAmount().doubleValue()>dd){
                        broker = allValid.get(i);
                        break;
@@ -218,15 +211,58 @@ public class OrderServiceImpl implements OrderService {
                    throw new RuntimeException("券商余额不足");
                }
                order.setBroker_id(broker.getId());
-
-           }else{
-               order.setBroker_id(os.getBroker_id());
-           }
         }else{
-            nettyOrder pod = orderMapper.findOrderById(order.getPid());
-            broker brokerById = brokerService.findBrokerById(pod.getBroker_id());
-            order.setBroker_id(brokerById.getId());
+            List<broker> all = brokerService.getAll();
+            List temp = new ArrayList();
+           all.forEach(s->{
+               Map map = TdxUtil.queryData("0",s.getAccount(),s.getPassword(),s.getTx_password(),s.getIp(),s.getPort());
+               List d = (List) map.get("data");
+               Map data = (Map) d.get(0);
+               if(data != null){
+                   String zq_code = (String) data.get("证券代码");
+                   String can_sell = (String) data.get("可卖数量");
+                   if(zq_code.equals(order.getStock_code().substring(0,2))){
+                       Map broker_map = new HashMap<>();
+                       broker_map.put("可卖数量",can_sell);
+                       broker_map.put("券商id",s.getId());
+                       temp.add(broker_map);
+                   }
+               }
+           });
+            double all_hand = temp.stream().mapToDouble(d -> {
+                Map m = (Map)d;
+                return Double.parseDouble((String) m.get("可卖数量"));
+            }).sum();
+            if(order.getBuy_hand()>all_hand){
+                throw new RuntimeException("券商持仓不足");
+            }
+
+           for (int i=0;i<temp.size();i++){
+              Map m = (Map) temp.get(i);
+              if( Double.valueOf((String) m.get("可卖数量")).intValue() > order.getBuy_hand()){
+                  order.setBroker_id((Integer) m.get("券商id"));
+                 return txdSend(order);
+              }
+           }
+           int suc_hand = 0;
+           int x = 0;
+           while (suc_hand < order.getBuy_hand()){
+              Map dz = (Map) temp.get(x);
+               Integer sell_hand = (Integer) dz.get("可卖数量");
+               if(sell_hand + suc_hand > order.getBuy_hand()){
+                   sell_hand = order.getBuy_hand()-suc_hand;
+               }
+               order.setBroker_id((Integer) dz.get("券商id"));
+               order.setBuy_hand(sell_hand);
+               suc_hand += (Integer) dz.get("可卖数量");
+               txdSend(order);
+               x++;
+           }
+           return 1;
         }
+        return txdSend(order);
+    }
+    public int txdSend(Order order){
         broker member_broker = brokerService.findBrokerById(order.getBroker_id());
         String flag = order.getStock_code().substring(0,2);
         String gddm = "";
