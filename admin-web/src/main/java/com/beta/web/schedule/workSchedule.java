@@ -172,6 +172,12 @@ public class workSchedule {
                                 Integer real_hand = no_cj.stream().mapToInt(Chengjiao::getHand).sum();//100
                                 changeOrder(all_hand,new BigDecimal(cj_money),order,0,real_hand,no_cj);
                             }
+                            if(chengjiaos.size()>0 && no_cj.size() ==0 && order.getStock_status() == 5){
+                                Map map = new HashMap();
+                                map.put("id",order.getId());
+                                map.put("state",2);
+                                orderServiceImpl.updateOrderState(map);
+                            }
                         });
                     }
 
