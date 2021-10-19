@@ -217,16 +217,20 @@ public class OrderServiceImpl implements OrderService {
            all.forEach(s->{
                Map map = TdxUtil.queryData("1",s.getAccount(),s.getPassword(),s.getTx_password(),s.getIp(),s.getPort());
                List d = (List) map.get("data");
-               Map data = (Map) d.get(0);
-               if(data != null){
-                   String zq_code = (String) data.get("证券代码");
-                   String can_sell = (String) data.get("可卖数量");
-                   if(zq_code.equals(order.getStock_code().substring(0,2))){
-                       Map broker_map = new HashMap<>();
-                       broker_map.put("可卖数量",can_sell);
-                       broker_map.put("券商id",s.getId());
-                       temp.add(broker_map);
-                   }
+
+               if(d != null){
+                   d.forEach(zz->{
+                       Map data = (Map)zz;
+                       String zq_code = (String) data.get("证券代码");
+                       String can_sell = (String) data.get("可卖数量");
+                       if(zq_code.equals(order.getStock_code().substring(0,2))){
+                           Map broker_map = new HashMap<>();
+                           broker_map.put("可卖数量",can_sell);
+                           broker_map.put("券商id",s.getId());
+                           temp.add(broker_map);
+                       }
+                   });
+
                }
            });
             double all_hand = temp.stream().mapToDouble(d -> {
