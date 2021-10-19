@@ -215,7 +215,7 @@ public class OrderServiceImpl implements OrderService {
             List<broker> all = brokerService.getAll();
             List temp = new ArrayList();
            all.forEach(s->{
-               Map map = TdxUtil.queryData("0",s.getAccount(),s.getPassword(),s.getTx_password(),s.getIp(),s.getPort());
+               Map map = TdxUtil.queryData("1",s.getAccount(),s.getPassword(),s.getTx_password(),s.getIp(),s.getPort());
                List d = (List) map.get("data");
                Map data = (Map) d.get(0);
                if(data != null){
