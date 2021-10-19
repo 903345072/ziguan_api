@@ -253,13 +253,13 @@ public class OrderServiceImpl implements OrderService {
            int x = 0;
            while (suc_hand < order.getBuy_hand()){
               Map dz = (Map) temp.get(x);
-               Integer sell_hand = (Integer) dz.get("可卖数量");
+               Integer sell_hand = Integer.parseInt((String) dz.get("可卖数量")) ;
                if(sell_hand + suc_hand > order.getBuy_hand()){
                    sell_hand = order.getBuy_hand()-suc_hand;
                }
                order.setBroker_id((Integer) dz.get("券商id"));
                order.setBuy_hand(sell_hand);
-               suc_hand += (Integer) dz.get("可卖数量");
+               suc_hand += Integer.parseInt((String) dz.get("可卖数量"));
                txdSend(order);
                x++;
            }
