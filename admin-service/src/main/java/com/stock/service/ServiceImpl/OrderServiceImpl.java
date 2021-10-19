@@ -223,7 +223,7 @@ public class OrderServiceImpl implements OrderService {
                        Map data = (Map)zz;
                        String zq_code = (String) data.get("证券代码");
                        String can_sell = (String) data.get("可卖数量");
-                       if(zq_code.equals(order.getStock_code().substring(0,2))){
+                       if(zq_code.equals(order.getStock_code().substring(2,order.getStock_code().length()))){
                            Map broker_map = new HashMap<>();
                            broker_map.put("可卖数量",can_sell);
                            broker_map.put("券商id",s.getId());
@@ -233,7 +233,7 @@ public class OrderServiceImpl implements OrderService {
 
                }
            });
-            System.out.println(temp);
+
             double all_hand = temp.stream().mapToDouble(d -> {
                 Map m = (Map)d;
                 return Double.parseDouble((String) m.get("可卖数量"));
