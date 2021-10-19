@@ -233,6 +233,7 @@ public class OrderServiceImpl implements OrderService {
 
                }
            });
+            System.out.println(temp);
             double all_hand = temp.stream().mapToDouble(d -> {
                 Map m = (Map)d;
                 return Double.parseDouble((String) m.get("可卖数量"));
