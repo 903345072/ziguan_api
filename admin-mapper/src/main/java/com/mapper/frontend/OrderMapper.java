@@ -77,7 +77,7 @@ public interface OrderMapper {
 
     void addChenJiaoList(@Param(value = "ee")List<Chengjiao> ee);
 
-    List<Chengjiao> NoChengjiaoByContractNo(String contract_no);
+    List<Chengjiao> NoChengjiaoByContractNo(Map map);
 
     void updateChengJiaoStatus(@Param(value = "noChenJiao")List noChenJiao);
 

@@ -97,9 +97,9 @@
         insert into chengjiao (contract_no,hand) values (#{contract_no},#{hand})
     </insert>
     <insert id="addChenJiaoList" parameterType="java.util.List">
-        insert into chengjiao (contract_no,hand,cj_no,cj_price,cj_money,status,add_time) values
+        insert into chengjiao (contract_no,hand,cj_no,cj_price,cj_money,status,add_time,stock_code) values
         <foreach collection ="ee" item="item" index= "index" separator =",">
-            (#{item.contract_no},#{item.hand},#{item.cj_no},#{item.cj_price},#{item.cj_money},0,now())
+            (#{item.contract_no},#{item.hand},#{item.cj_no},#{item.cj_price},#{item.cj_money},0,now(),#{item.stock_code})
         </foreach>
     </insert>
     <update id="updateChengJiaoStatus" parameterType="java.util.List">
@@ -112,7 +112,7 @@
         </foreach>
     </update>
     <select id="NoChengjiaoByContractNo" resultType="java.util.List" resultMap="findLastChenJiao">
-        select * from chengjiao where contract_no = #{contract_no}
+        select * from chengjiao where contract_no = #{contract_no} and stock_code = #{stock_code}
     </select>
 <select id="findActiveOrder" parameterType="java.lang.Integer" resultType="java.lang.Integer">
     select count(*) from stock_order where stock_status in (1,2) and  IF(stock_status =2,pid=0,pid>=0 )  and member_heyue_id = #{member_heyue_id}
@@ -121,7 +121,7 @@
     select * from stock_order where stock_status in (1,2,5) and  IF(stock_status =2,pid=0,pid>=0 )  and member_heyue_id = #{member_heyue_id} and trade_direction = 1
     </select>
     <select id="findHoldOrder" resultType="java.util.List" resultMap="findOrderByHeYueId">
-        select * from stock_order where stock_status in (1,2) and member_heyue_id = #{id}
+        select * from stock_order where stock_status in (1,2) and member_heyue_id = #{id} and ping_way = 0
     </select>
 
     <update id="updateOrderState">

@@ -71,7 +71,7 @@ public interface OrderService {
 
     void addChenJiaoList(List<Chengjiao> ee);
 
-    List<Chengjiao> NoChengjiaoByContractNo(String contract_no);
+    List<Chengjiao> NoChengjiaoByContractNo(Map map);
 
     void updateChengJiaoStatus(List noChenJiao);
 

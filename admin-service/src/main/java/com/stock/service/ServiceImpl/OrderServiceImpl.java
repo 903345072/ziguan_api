@@ -154,8 +154,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Chengjiao> NoChengjiaoByContractNo(String contract_no) {
-        return orderMapper.NoChengjiaoByContractNo(contract_no);
+    public List<Chengjiao> NoChengjiaoByContractNo(Map map) {
+        return orderMapper.NoChengjiaoByContractNo(map);
     }
 
     @Override

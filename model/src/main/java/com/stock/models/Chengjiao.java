@@ -11,6 +11,15 @@ public class Chengjiao {
     public BigDecimal cj_price;
     public String add_time;
     public String cj_no;
+    public String stock_code;
+
+    public String getStock_code() {
+        return stock_code;
+    }
+
+    public void setStock_code(String stock_code) {
+        this.stock_code = stock_code;
+    }
 
     public String getCj_no() {
         return cj_no;

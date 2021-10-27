@@ -164,7 +164,12 @@ public class workSchedule {
                     if (weituo_order.size()>0){
                         weituo_order.forEach(e->{
                             nettyOrder order = (nettyOrder)e;
-                            List<Chengjiao> chengjiaos = orderServiceImpl.NoChengjiaoByContractNo(order.getContract_no());//800
+
+                            String stock_code = order.getStock_code().substring(2);
+                            Map mm = new HashMap();
+                            mm.put("contract_no",order.getContract_no());
+                            mm.put("stock_code",stock_code);
+                            List<Chengjiao> chengjiaos = orderServiceImpl.NoChengjiaoByContractNo(mm);//800
                             List<Chengjiao> no_cj = chengjiaos.stream().filter(k -> k.getStatus() == 0).collect(Collectors.toList());//100
                             Integer all_hand = chengjiaos.stream().mapToInt(Chengjiao::getHand).sum();//800
                             if(no_cj.size() > 0){
@@ -549,6 +554,7 @@ public class workSchedule {
                                             if(Double.parseDouble((String) s.get(ss))<=0){
                                                 return;
                                             }
+                                            chengjiao1.setStock_code((String) s.get("证券代码"));
                                             ee.add(chengjiao1);
                                         }
                                     });
