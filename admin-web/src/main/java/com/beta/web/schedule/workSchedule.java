@@ -201,11 +201,13 @@ public class workSchedule {
                 pa.put("stock_code",order.getStock_code());
                 nettyOrder parentOrder = orderServiceImpl.findParentOrder(pa);
                 if(parentOrder != null){
-                    order.setPid(parentOrder.getId());
-                    Map dp = new HashMap<>();
-                    dp.put("id",order.getId());
-                    dp.put("pid",order.getPid());
-                    orderServiceImpl.updateOrderPid(dp);
+                    if(parentOrder.getId() != order.getId()){
+                        order.setPid(parentOrder.getId());
+                        Map dp = new HashMap<>();
+                        dp.put("id",order.getId());
+                        dp.put("pid",order.getPid());
+                        orderServiceImpl.updateOrderPid(dp);
+                    }
                 }
             }
             //扣除手续费
