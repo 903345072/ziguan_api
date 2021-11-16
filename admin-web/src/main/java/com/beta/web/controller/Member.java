@@ -239,6 +239,18 @@ public class Member {
             map.put("pid",id);
         }
         List lst = MemberServiceImpl.getMemberList(map);
+       List<com.stock.models.frontend.Member> m =  (List<com.stock.models.frontend.Member>)lst.get(0);
+       m.forEach(s->{
+           if(s.getFengkong() == null){
+              Map ms = new HashMap();
+              ms.put("yj_rate",10);
+              ms.put("is_kc",1);
+              ms.put("kc_max",10000);
+              ms.put("single_max",10000);
+              ms.put("forbid_list","");
+               s.setFengkong(ms);
+           }
+       });
         data.put("items",lst.get(0));
         data.put("count",lst.get(1));
         return RetResponse.makeOKRsp(data);
