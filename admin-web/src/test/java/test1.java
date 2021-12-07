@@ -49,6 +49,8 @@ public class test1 {
 
 
     @Autowired
+    MemberService memberServiceImpl;
+    @Autowired
     PermissionMapper permissionMapper;
 @Autowired
     OrderMapper o;
@@ -85,16 +87,14 @@ public class test1 {
     @Test
     //@Transactional(rollbackFor=Exception.class)
     public void queryData(){
-                Map dd = new HashMap();
-                dd.put("stock_code","asd");
-                dd.put("price",3.12);
-                brokerServiceImpl.addChuQuan(dd);
+        BigDecimal d = null;
+        double rate_s = d.doubleValue()/1000;
+        BigDecimal v = new BigDecimal(100).multiply(new BigDecimal(19.31)).multiply(new BigDecimal(rate_s));
+        if(v.doubleValue() < 5){
+            v = new BigDecimal(5);
+        }
+        System.out.println(v);
     }
-    @Test
-    public void queryData1(){
-        List<Chengjiao> chengjiaos = orderServiceImpl.NoChengjiaoByContractNo("167788");//800
-        List<Chengjiao> no_cj = chengjiaos.stream().filter(k -> k.getStatus() == 0).collect(Collectors.toList());//100
-        orderServiceImpl.updateChengJiaoStatus(no_cj);
-    }
+
 
 }
